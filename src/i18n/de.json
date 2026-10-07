@@ -1,0 +1,11 @@
+{
+  "tabs": { "feed": "Entdecken", "requests": "Anfragen", "chats": "Chats", "dates": "Dates", "profile": "Profil" },
+  "auth": {
+    "welcomeBack": "Willkommen zurück",
+    "login": "Anmelden",
+    "register": "Konto erstellen",
+    "rememberMe": "Eingeloggt bleiben",
+    "wrongCredentials": "E-Mail oder Passwort ist falsch."
+  },
+  "feed": { "like": "Dabei!", "emptyTitle": "Keine neuen Ideen in deiner Nähe" }
+}
