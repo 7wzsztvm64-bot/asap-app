@@ -14,9 +14,9 @@ Entscheidungen: echte Fotos, Start in Frankfurt, Deutsch + Englisch, Arbeitstite
 | 6 · Review & Launch | 15 | Okt – Dez 2027 | App ist im App Store veröffentlicht |
 
 ## Phase 0 – Setup
-- [ ] Mac vorbereitet: Git, Node.js (LTS), VS Code + Claude Code
-- [ ] Repo `asap-app` auf GitHub (privat), Startpaket gepusht
-- [ ] `npm install` und `npm run dev` laufen
+- [x] Mac vorbereitet: Git, Node.js (LTS), VS Code + Claude Code
+- [x] Repo `asap-app` auf GitHub (privat), Startpaket gepusht
+- [x] `npm install` und `npm run dev` laufen
 - [ ] Supabase-Projekt in Region Frankfurt angelegt, `.env` aus `.env.example` erstellt
 - [ ] Namensprüfung „asap“: App Store + DPMA-Markenrecherche
 - [ ] Issues für Phase 1 (unten) in GitHub angelegt
