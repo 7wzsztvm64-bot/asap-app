@@ -17,7 +17,7 @@ Entscheidungen: echte Fotos, Start in Frankfurt, Deutsch + Englisch, Arbeitstite
 - [x] Mac vorbereitet: Git, Node.js (LTS), VS Code + Claude Code
 - [x] Repo `asap-app` auf GitHub (privat), Startpaket gepusht
 - [x] `npm install` und `npm run dev` laufen
-- [ ] Supabase-Projekt in Region Frankfurt angelegt, `.env` aus `.env.example` erstellt
+- [x] Supabase-Projekt in Region Frankfurt angelegt, `.env` aus `.env.example` erstellt
 - [ ] Namensprüfung „asap“: App Store + DPMA-Markenrecherche
 - [ ] Issues für Phase 1 (unten) in GitHub angelegt
 
