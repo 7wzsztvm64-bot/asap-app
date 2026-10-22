@@ -18,8 +18,8 @@ Entscheidungen: echte Fotos, Start in Frankfurt, Deutsch + Englisch, Arbeitstite
 - [x] Repo `asap-app` auf GitHub (privat), Startpaket gepusht
 - [x] `npm install` und `npm run dev` laufen
 - [x] Supabase-Projekt in Region Frankfurt angelegt, `.env` aus `.env.example` erstellt
-- [ ] Namensprüfung „asap“: App Store + DPMA-Markenrecherche
-- [ ] Issues für Phase 1 (unten) in GitHub angelegt
+- [ ] Namensprüfung „asap“: App Store + DPMA-Markenrecherche (zurückgestellt – vor Phase 5 erledigen)
+- [x] Issues für Phase 1 (unten) in GitHub angelegt (#1–#12)
 
 ## Phase 1 – Issues zum Kopieren
 Jeweils: Titel – Ziel. *Fertig, wenn …*
