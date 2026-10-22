@@ -7,5 +7,19 @@
     "rememberMe": "Stay logged in",
     "wrongCredentials": "Email or password is incorrect."
   },
-  "feed": { "like": "I'm in!", "emptyTitle": "No new ideas near you" }
+  "feed": { "like": "I'm in!", "emptyTitle": "No new ideas near you" },
+  "dev": {
+    "supabase": {
+      "title": "Backend (Supabase)",
+      "check": "Check connection",
+      "note": "Tests URL and key from .env. The app still uses the mock backend.",
+      "ok": "Supabase reachable",
+      "okText": "Responded in {ms} ms · Auth version {version}",
+      "failed": "Supabase not reachable",
+      "failedText": "Status: {status}. Check URL and key in .env and restart the dev server.",
+      "noResponse": "no response",
+      "notConfigured": "Supabase not set up",
+      "notConfiguredText": "Create .env from .env.example and restart the dev server."
+    }
+  }
 }

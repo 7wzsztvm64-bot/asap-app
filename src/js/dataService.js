@@ -1,5 +1,6 @@
 import { Util, Fmt, CAT, BUDGETS, TIME, DURATIONS, GENDER, PLACES, INTEREST_TAGS, hashPassword, SafeStorage, ApiError } from './core.js';
 import { TEST_ACCOUNTS, buildSeedDB } from './seed.js';
+import { isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './supabase.js';
 
 /* =============================================================================
    4) DATASERVICE – die EINZIGE Schicht mit Datenzugriff
@@ -1071,6 +1072,19 @@ const DataService = (() => {
         saveDB(db);
         tick();
         return n;
+      },
+      /** Prüft, ob Supabase mit URL und Key aus der .env erreichbar ist (Auth-Health-Endpunkt, braucht noch keine Tabellen).
+          Gibt { configured, ok, status, ms, version } zurück – wirft nicht. */
+      async checkSupabase() {
+        if (!isSupabaseConfigured) return { configured: false, ok: false };
+        const start = performance.now();
+        try {
+          const res = await fetch(`${supabaseUrl}/auth/v1/health`, { headers: { apikey: supabaseAnonKey } });
+          const body = await res.json().catch(() => ({}));
+          return { configured: true, ok: res.ok, status: res.status, ms: Math.round(performance.now() - start), version: body.version || '' };
+        } catch (e) {
+          return { configured: true, ok: false, status: 0, ms: Math.round(performance.now() - start), error: e.message };
+        }
       },
       stats() {
         const db = loadDB();

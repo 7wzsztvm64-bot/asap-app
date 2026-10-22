@@ -2,6 +2,7 @@ import { Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, 
 import { DataService } from './dataService.js';
 import { $, $$, shortCity, toggleIn, UI, App } from './uiCore.js';
 import { IdeaForm } from './viewsAuth.js';
+import { t } from '../i18n/index.js';
 
 /* =============================================================================
    ANSICHTEN: Eigenes Profil, Profil bearbeiten, Idee anlegen/bearbeiten
@@ -304,6 +305,9 @@ const DevPanel = {
           <div class="dev-row" style="margin-top:12px;flex-wrap:wrap">
             <button type="button" class="btn btn-sm dev-btn" data-dev="sim-like" ${me ? '' : raw('disabled')}>❤️ Anfrage simulieren</button>
             <button type="button" class="btn btn-sm dev-btn" data-dev="ffwd">⏩ Sofort ausführen (${st.queue})</button></div></div>
+        <div class="dev-section"><h4>${t('dev.supabase.title')}</h4>
+          <button type="button" class="btn btn-sm dev-btn btn-block" data-dev="check-supabase">🔌 ${t('dev.supabase.check')}</button>
+          <div class="dev-note">${t('dev.supabase.note')}</div></div>
         <div class="dev-section"><h4>Daten</h4><div class="dev-stats">${this.statsHtml(st)}</div>
           ${this.confirmReset ? html`<div class="dev-note" style="color:#FFB4B4">Wirklich alles zurücksetzen? Registrierte Konten, Likes und Chats gehen verloren.</div>
             <div class="dev-row" style="margin-top:8px"><button type="button" class="btn btn-sm btn-danger" style="flex:1" data-dev="reset-yes">Ja, zurücksetzen</button><button type="button" class="btn btn-sm dev-btn" data-dev="reset-no">Abbrechen</button></div>`
@@ -336,6 +340,14 @@ const DevPanel = {
     } catch (err) { UI.handleError(err); }
     UI.busy(btn, false);
   },
+  async checkSupabase(btn) {
+    UI.busy(btn, true);
+    const r = await DataService.dev.checkSupabase();
+    UI.busy(btn, false);
+    if (!r.configured) return UI.toast({ icon: '⚙️', title: t('dev.supabase.notConfigured'), text: t('dev.supabase.notConfiguredText'), light: true, duration: 3200 });
+    if (r.ok) return UI.toast({ icon: '✅', title: t('dev.supabase.ok'), text: t('dev.supabase.okText', { ms: r.ms, version: r.version || '–' }), light: true, duration: 3200 });
+    UI.toast({ icon: '❌', title: t('dev.supabase.failed'), text: t('dev.supabase.failedText', { status: r.status || t('dev.supabase.noResponse') }), light: true, duration: 4200 });
+  },
   async onClick(e) {
     const t = e.target.closest('[data-dev]');
     if (!t || t.disabled || UI.isBusy(t)) return;
@@ -358,6 +370,7 @@ const DevPanel = {
         this.updateStats();
         return;
       }
+      case 'check-supabase': return this.checkSupabase(t);
       case 'reset': this.confirmReset = true; return this.render();
       case 'reset-no': this.confirmReset = false; return this.render();
       case 'reset-yes':
