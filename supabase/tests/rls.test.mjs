@@ -1,31 +1,8 @@
 /* Test der Row Level Security (Issue #3) – Start mit `npm run test:db`.
-   Läuft komplett lokal: PGlite ist ein echtes Postgres als WebAssembly.
-   Die Supabase-Umgebung (Rollen, auth.uid(), Standardrechte) wird unten nachgebildet,
-   danach werden alle Dateien aus supabase/migrations/ der Reihe nach eingespielt. */
+   Läuft komplett lokal mit PGlite, Aufbau siehe setup.mjs. */
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { PGlite } from '@electric-sql/pglite';
-
-const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'migrations');
-
-// Nachbildung dessen, was Supabase in jedem Projekt schon mitbringt
-const SUPABASE_ENV = `
-  create role anon nologin noinherit;
-  create role authenticated nologin noinherit;
-  create role service_role nologin noinherit bypassrls;
-  create schema auth;
-  create table auth.users (id uuid primary key default gen_random_uuid());
-  create function auth.uid() returns uuid language sql stable as $$
-    select (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid
-  $$;
-  grant usage on schema auth to anon, authenticated, service_role;
-  grant usage on schema public to anon, authenticated, service_role;
-  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-  alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
-  alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
-`;
+import { createTestDb, DENIED } from './setup.mjs';
 
 // Feste IDs, damit die Testdaten gut lesbar sind
 const A = '00000000-0000-0000-0000-00000000000a'; // Jonas – „Person A“
@@ -38,43 +15,21 @@ const IDEA_C = '10000000-0000-0000-0000-00000000000c';
 const MATCH_AB = '20000000-0000-0000-0000-0000000000ab';
 const MATCH_BC = '20000000-0000-0000-0000-0000000000bc';
 
-const db = new PGlite();
-
-/** Als eingeloggte Person handeln (wie ein Request mit deren JWT). */
-async function as(userId) {
-  await db.exec('reset role');
-  await db.query(`select set_config('request.jwt.claims', $1, false)`, [JSON.stringify({ sub: userId, role: 'authenticated' })]);
-  await db.exec('set role authenticated');
-}
-async function asAnon() {
-  await db.exec('reset role');
-  await db.query(`select set_config('request.jwt.claims', '', false)`);
-  await db.exec('set role anon');
-}
-async function asAdmin() {
-  await db.exec('reset role');
-  await db.query(`select set_config('request.jwt.claims', '', false)`);
-}
-const rows = async (sql, params) => (await db.query(sql, params)).rows;
-const DENIED = /row-level security|permission denied/;
+let db, as, asAnon, asAdmin, rows;
 
 before(async () => {
-  await db.exec(SUPABASE_ENV);
-  for (const file of readdirSync(MIGRATIONS_DIR).filter(f => f.endsWith('.sql')).sort()) {
-    await db.exec(readFileSync(join(MIGRATIONS_DIR, file), 'utf8'));
-  }
+  const t = await createTestDb();
+  ({ db, as, asAnon, asAdmin, rows } = t);
   // Testdaten als Admin (wie im Dashboard)
+  await t.createUser(A, { name: 'Jonas', gender: 'mann', interested_in: ['frau'] });
+  await t.createUser(B, { name: 'Mia', gender: 'frau', interested_in: ['mann'] });
+  await t.createUser(C, { name: 'Lena', gender: 'frau', interested_in: ['mann'] });
+  await t.createIdea(IDEA_A, A, { title: 'Tischtennis-Duell' });
+  await t.createIdea(IDEA_B, B, { title: 'Ramen-Abend' });
+  await t.createIdea(IDEA_B_PAUSED, B, { title: 'Goetheturm', active: false });
+  await t.createIdea(IDEA_C, C, { title: 'Flohmarkt-Challenge' });
+  await asAdmin();
   await db.exec(`
-    insert into auth.users (id) values ('${A}'), ('${B}'), ('${C}');
-    insert into public.profiles (id, name, birthdate, gender, interested_in, city, profile_complete) values
-      ('${A}', 'Jonas', '1997-03-01', 'mann', '{frau}', 'Frankfurt-Bornheim', true),
-      ('${B}', 'Mia',   '1999-06-15', 'frau', '{mann}', 'Frankfurt-Sachsenhausen', true),
-      ('${C}', 'Lena',  '1999-01-20', 'frau', '{mann}', 'Frankfurt-Nordend', true);
-    insert into public.ideas (id, owner_id, emoji, title, description, category, budget, duration, time_of_day, location, active) values
-      ('${IDEA_A}', '${A}', '🏓', 'Tischtennis-Duell', 'Ich bringe Schläger und Bälle mit.', 'Sport', '€', '1–2 Std.', 'Nachmittags', 'Günthersburgpark', true),
-      ('${IDEA_B}', '${B}', '🍜', 'Ramen-Abend', 'Beste Tonkotsu der Stadt, danach Main.', 'Essen & Trinken', '€€', '1–2 Std.', 'Abends', 'Kaiserstraße', true),
-      ('${IDEA_B_PAUSED}', '${B}', '🌳', 'Goetheturm', 'Durch den Stadtwald zum Goetheturm.', 'Outdoor', '€', '2–3 Std.', 'Nachmittags', 'Sachsenhausen', false),
-      ('${IDEA_C}', '${C}', '🧺', 'Flohmarkt-Challenge', 'Jede:r hat 10 € für das skurrilste Fundstück.', 'Entspannt', '€', '2–3 Std.', 'Morgens', 'Museumsufer', true);
     insert into public.matches (id, user1_id, user2_id, idea_id) values
       ('${MATCH_AB}', '${B}', '${A}', '${IDEA_B}'),
       ('${MATCH_BC}', '${C}', '${B}', '${IDEA_C}');
