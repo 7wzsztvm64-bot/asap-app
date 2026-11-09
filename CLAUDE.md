@@ -18,6 +18,8 @@
 - `npm run build` – Produktionsbuild nach `dist/`
 - `npm run preview` – Build lokal ansehen
 - `npm run test:db` – spielt alle Migrationen in ein lokales Test-Postgres (PGlite) und prüft die RLS-Regeln
+- `npm run db:migrate` – spielt fehlende Migrationen ins echte Supabase-Projekt ein (braucht `SUPABASE_ACCESS_TOKEN` in `.env`); vorher `npm run test:db`
+- `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration)
 
 ## Struktur
 - `index.html` – Grundgerüst (Smartphone-Rahmen auf dem Desktop, App-Container)
@@ -30,7 +32,7 @@
 - `src/js/views*.js` – Ansichten (Auth/Onboarding, Feed/Anfragen/Profile, Chats/Dates, eigenes Profil/Dev-Panel)
 - `src/js/pwa.js` – Icon, Manifest, Service Worker (nur im Produktionsbuild)
 - `src/i18n/` – Übersetzungen `de.json`, `en.json` und die Funktion `t()`
-- `supabase/migrations/` – SQL-Migrationen (Schema, RLS); im Supabase-Dashboard per SQL Editor einspielen, in Reihenfolge der Dateinamen
+- `supabase/migrations/` – SQL-Migrationen (Schema, RLS); eingespielt mit `npm run db:migrate`, bereits angewendete stehen in `supabase_migrations.schema_migrations`. Eingespielte Dateien nie ändern, sondern neue Migration anlegen
 - `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
 - `prototype/dabei-prototype.html` – ursprünglicher Single-File-Prototyp, **nur Referenz, nicht ändern**
