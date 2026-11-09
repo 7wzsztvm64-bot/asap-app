@@ -1,18 +1,31 @@
 {
-  "tabs": { "feed": "Discover", "requests": "Requests", "chats": "Chats", "dates": "Dates", "profile": "Profile" },
+  "tabs": {
+    "feed": "Discover",
+    "requests": "Requests",
+    "chats": "Chats",
+    "dates": "Dates",
+    "profile": "Profile"
+  },
   "auth": {
     "welcomeBack": "Welcome back",
     "login": "Log in",
     "register": "Create account",
     "rememberMe": "Stay logged in",
-    "wrongCredentials": "Email or password is incorrect."
+    "wrongCredentials": "Email or password is incorrect.",
+    "registerNote": {
+      "mock": "Prototype: please don't use real passwords. All data stays local in your browser.",
+      "supabase": "Development version: your data is stored on the asap server in Frankfurt (Supabase)."
+    }
   },
-  "feed": { "like": "I'm in!", "emptyTitle": "No new ideas near you" },
+  "feed": {
+    "like": "I'm in!",
+    "emptyTitle": "No new ideas near you"
+  },
   "dev": {
     "supabase": {
       "title": "Backend (Supabase)",
       "check": "Check connection",
-      "note": "Tests URL and key from .env. The app still uses the mock backend.",
+      "note": "Tests URL and key from .env.",
       "ok": "Supabase reachable",
       "okText": "Responded in {ms} ms · Auth version {version}",
       "failed": "Supabase not reachable",
@@ -20,6 +33,97 @@
       "noResponse": "no response",
       "notConfigured": "Supabase not set up",
       "notConfiguredText": "Create .env from .env.example and restart the dev server."
+    },
+    "backend": "Active backend",
+    "mockOnly": "Only available in the mock backend. Recreate test data in Supabase: npm run db:seed",
+    "supabaseLogins": "Switching logs you in with the test password. For two accounts at once, use a second (private) browser window."
+  },
+  "errors": {
+    "UNAUTHORIZED": "Your session has expired. Please log in again.",
+    "VALIDATION": "Please check the highlighted fields.",
+    "NEEDS_IDEA": "Create an active idea of your own first.",
+    "IDEA_UNAVAILABLE": "Sorry, this idea is no longer available.",
+    "OWN_IDEA": "You can't like your own idea.",
+    "NOT_COMPATIBLE": "Sorry, this idea doesn't match your profile settings.",
+    "DUPLICATE": "You've already liked this idea.",
+    "NOT_FOUND": "This doesn't exist (anymore).",
+    "CONFLICT": "This has already been answered.",
+    "FORBIDDEN": "You're not allowed to do that.",
+    "OWN_PROPOSAL": "You can't answer your own proposal.",
+    "IDEA_LIMIT": "You can have at most 10 ideas at the same time.",
+    "UNDERAGE": "You must be at least 18 years old to use asap.",
+    "PROFILE_INCOMPLETE": "Your profile isn't complete yet.",
+    "INVALID_CREDENTIALS": "Email or password is incorrect.",
+    "EMAIL_NOT_CONFIRMED": "Please confirm your email address first – check your inbox.",
+    "RATE_LIMIT": "Too many attempts. Please wait a moment and try again.",
+    "WEAK_PASSWORD": "This password is too weak. Please choose another one.",
+    "NETWORK": "Can't reach the server. Please check your internet connection.",
+    "SERVER": "Something went wrong. Please try again in a moment.",
+    "NOT_CONFIGURED": "Supabase isn't set up – check .env and restart the dev server.",
+    "missingField": "Still missing.",
+    "EMAIL_NOT_AUTHORIZED": "Sign-up is currently limited to approved test addresses."
+  },
+  "validation": {
+    "email": "Please enter a valid email address.",
+    "passwordMin": "The password must be at least 8 characters long.",
+    "passwordMismatch": "The passwords don't match.",
+    "idea": {
+      "titleMin": "Give your idea a title (at least 5 characters).",
+      "titleMax": "The title can be at most 80 characters long.",
+      "descriptionMin": "Briefly describe what you'll do (at least 20 characters).",
+      "descriptionMax": "The description can be at most 300 characters long.",
+      "category": "Please choose a category.",
+      "budget": "Please choose a budget.",
+      "duration": "Please choose a duration.",
+      "timeOfDay": "Please choose a time of day.",
+      "locationMin": "Where will you meet? (at least 3 characters)",
+      "locationMax": "At most 70 characters."
+    },
+    "profile": {
+      "nameMin": "Please enter your first name (at least 2 characters).",
+      "nameMax": "At most 30 characters.",
+      "nameLetters": "Please use letters only.",
+      "birthdateMissing": "Please enter your date of birth.",
+      "underage": "You must be at least 18 years old to use asap.",
+      "birthdateInvalid": "Please check the date of birth.",
+      "gender": "Please choose an option.",
+      "interestedIn": "Please choose who you're interested in.",
+      "cityMin": "Please enter your city or neighbourhood.",
+      "cityMax": "At most 60 characters.",
+      "bioMax": "At most 300 characters.",
+      "interestsMin": "Choose at least 3 interests.",
+      "interestsMax": "At most 10 interests.",
+      "photos": "Choose at least one profile picture."
+    },
+    "chat": {
+      "empty": "The message is empty.",
+      "tooLong": "The message is too long (max. 1000 characters)."
+    },
+    "proposal": {
+      "missing": "Please choose a date and time.",
+      "past": "The date must be in the future.",
+      "tooFar": "Please choose a date within the next 12 months."
+    }
+  },
+  "chat": {
+    "proposalPreview": {
+      "confirmed": "📅 Date confirmed: {when}",
+      "declined": "📅 Date proposal declined",
+      "mine": "📅 You proposed {when}",
+      "theirs": "📅 {name} proposes {when}"
+    }
+  },
+  "confirmEmail": {
+    "title": "Almost there!",
+    "text": "We've sent an email to {email}. Click the link in it to confirm your account – then you can log in.",
+    "hint": "No email? Check your spam folder too.",
+    "toLogin": "Go to login"
+  },
+  "profile": {
+    "version": "asap · development version",
+    "storage": {
+      "mock": "All data is stored locally in your browser ({mode}).",
+      "supabase": "Your data is stored on the asap server (Supabase, Frankfurt)."
     }
   }
 }

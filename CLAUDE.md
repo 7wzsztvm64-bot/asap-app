@@ -8,7 +8,7 @@
 
 ## Stack
 - Vite 8, Vanilla JavaScript als ES-Module, kein UI-Framework.
-- Aktuell: Mock-Backend im Browser (localStorage) inkl. simulierter Testpersonen.
+- Zwei Backends hinter `DataService` mit identischer API: **Mock** (localStorage + simulierte Testpersonen, Standard) und **Supabase** (aktiv mit `VITE_BACKEND=supabase` in `.env`). Das Mock-Backend entfällt mit Issue #10.
 - Phase 1: **Supabase** (Projekt in Region Frankfurt, eu-central-1) für Login, Datenbank, Realtime-Chat, Datei-Speicher.
 - Phase 4: **Capacitor** für die iOS-App.
 
@@ -19,6 +19,7 @@
 - `npm run preview` – Build lokal ansehen
 - `npm run test:db` – spielt alle Migrationen in ein lokales Test-Postgres (PGlite) und prüft die RLS-Regeln
 - `npm run db:migrate` – spielt fehlende Migrationen ins echte Supabase-Projekt ein (braucht `SUPABASE_ACCESS_TOKEN` in `.env`); vorher `npm run test:db`
+- `npm run db:seed` – Testpersonen in Supabase neu anlegen (alle `@datedate.app`-Konten, Passwort `Test1234`; löscht vorher die alten)
 - `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration)
 
 ## Struktur
@@ -27,7 +28,11 @@
 - `src/styles/app.css` – alle Styles (Design-Tokens oben in `:root`)
 - `src/js/core.js` – Hilfsfunktionen, `html`-Template (escaped!), Formatierung, Icons, Konstanten, SHA-256, Storage-Adapter
 - `src/js/seed.js` – Testdaten (20 Personen + 2 Test-Logins)
-- `src/js/dataService.js` – **einzige Datenschicht**: Mock-Backend + Bot-Simulation
+- `src/js/dataService.js` – **einzige Datenschicht für die UI**: wählt das Backend (`VITE_BACKEND`)
+- `src/js/mockBackend.js` – Mock-Backend (localStorage) + Bot-Simulation
+- `src/js/supabaseBackend.js` – Supabase-Backend inkl. Realtime (Events wie im Mock); Fehler aus DB-Funktionen kommen als Code (`raise exception … message = 'CODE'`) und werden über `t('errors.CODE')` übersetzt
+- `src/js/domain.js` – Fachlogik für beide Backends (Validierung, Entfernung, Feed-Sortierung)
+- `src/js/supabase.js` – Supabase-Client („Eingeloggt bleiben“ über eigenen Storage-Adapter)
 - `src/js/uiCore.js` – UI-Bausteine, Toasts, Sheets, Match-Overlay, Router (`App`)
 - `src/js/views*.js` – Ansichten (Auth/Onboarding, Feed/Anfragen/Profile, Chats/Dates, eigenes Profil/Dev-Panel)
 - `src/js/pwa.js` – Icon, Manifest, Service Worker (nur im Produktionsbuild)
@@ -49,4 +54,5 @@
 9. **Commits** auf Deutsch, kurz und beschreibend; nie direkt `.env` oder Schlüssel committen.
 
 ## Aktueller Stand
-- Phase 0 (Setup) läuft. Danach Phase 1, Issues siehe `docs/ROADMAP.md`.
+- Phase 0 erledigt. Phase 1: #1–#3 und #5–#9 umgesetzt (Supabase-Backend komplett, per `VITE_BACKEND=supabase` nutzbar). Offen: #4 (Bestätigungs-Mail – braucht Auth-Einstellungen/SMTP), #10 (Mock entfernen), #11 (Texte), #12 (Abnahmetest mit zwei Handys).
+- Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.

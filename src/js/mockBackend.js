@@ -1,9 +1,10 @@
-import { Util, Fmt, CAT, BUDGETS, TIME, DURATIONS, GENDER, PLACES, INTEREST_TAGS, hashPassword, SafeStorage, ApiError } from './core.js';
+import { Util, Fmt, hashPassword, SafeStorage, ApiError } from './core.js';
+import { validationError, distanceKm, compatible, validateIdea, validateProfilePatch, validateCredentials, validateMessage, validateProposalDate, proposalPreview, filterAndSortFeed } from './domain.js';
 import { TEST_ACCOUNTS, buildSeedDB } from './seed.js';
-import { isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './supabase.js';
+import { checkSupabaseHealth } from './supabase.js';
 
 /* =============================================================================
-   4) DATASERVICE – die EINZIGE Schicht mit Datenzugriff
+   MOCK-BACKEND (Standard, solange VITE_BACKEND nicht „supabase“ ist – siehe dataService.js)
    -----------------------------------------------------------------------------
    Die UI ruft ausschließlich diese async-Methoden auf und greift nie direkt auf
    localStorage zu. Aktuell ist dahinter ein Mock-Backend auf Basis von
@@ -38,7 +39,7 @@ import { isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './supabase.j
    Echtzeit-Ereignisse (match, message, typing, request, proposal) würden dann über
    einen WebSocket an dieselben DataService.on(...)-Listener weitergereicht.
    ============================================================================= */
-const DataService = (() => {
+const MockBackend = (() => {
   const KEY_DB = 'asap.db.v1';
   const KEY_SESSION = 'asap.session.v1';
   const KEY_SETTINGS = 'asap.settings.v1';
@@ -150,29 +151,6 @@ const DataService = (() => {
   }
 
   /* ---------- Mapper: nie Passwort-Hash oder E-Mail fremder Personen herausgeben ---------- */
-  function coordsFor(city) {
-    if (!city) return null;
-    const c = city.trim().toLowerCase();
-    const keys = Object.keys(PLACES);
-    const key = keys.find(k => k.toLowerCase() === c) || keys.find(k => c.length >= 3 && k.toLowerCase().includes(c));
-    return key ? PLACES[key] : null;
-  }
-  function haversine([lat1, lon1], [lat2, lon2]) {
-    const R = 6371, rad = x => x * Math.PI / 180;
-    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(a));
-  }
-  /** Simulierte Entfernung: Stadtteil-Koordinaten + stabiler Zufallsanteil („genaue Adresse“). */
-  function distanceKm(a, b) {
-    const jitter = (Util.hash([a.id, b.id].sort().join('|')) % 1000) / 1000;
-    const ca = coordsFor(a.city), cb = coordsFor(b.city);
-    const d = (ca && cb) ? haversine(ca, cb) + 0.6 + jitter * 1.8 : 3 + jitter * 30;
-    return Math.round(d * 10) / 10;
-  }
-  function compatible(a, b) {
-    return (a.interestedIn || []).includes(b.gender) && (b.interestedIn || []).includes(a.gender);
-  }
   function publicUser(u, viewer) {
     if (!u) return null;
     const isOther = viewer && viewer.id !== u.id;
@@ -192,11 +170,6 @@ const DataService = (() => {
   function matchBetween(db, a, b) { return db.matches.find(m => m.userIds.includes(a) && m.userIds.includes(b)); }
   function otherIdOf(match, me) { return match.userIds.find(id => id !== me); }
   function userById(db, id) { return db.users.find(u => u.id === id); }
-  function validationError(fields, message = 'Bitte prüfe die markierten Felder.') {
-    const e = new ApiError(message, 'VALIDATION');
-    e.fields = fields;
-    return e;
-  }
 
   /** Match aus einem angenommenen Like erzeugen (bzw. bestehendes Match wiederverwenden). */
   function createMatch(db, like, acceptorId) {
@@ -223,12 +196,6 @@ const DataService = (() => {
       other: publicUser(userById(db, otherIdOf(match, meId)), me),
       idea: publicIdea(db.ideas.find(i => i.id === match.ideaId)),
     };
-  }
-  function proposalPreview(p, meId, otherName) {
-    const when = Fmt.dateShort(p.dateTime);
-    if (p.status === 'confirmed') return `📅 Date bestätigt: ${when}`;
-    if (p.status === 'declined') return '📅 Terminvorschlag abgelehnt';
-    return p.proposedBy === meId ? `📅 Du hast ${when} vorgeschlagen` : `📅 ${otherName} schlägt ${when} vor`;
   }
 
   /* ===========================================================================
@@ -442,77 +409,6 @@ const DataService = (() => {
     changed('simulation');
   }
 
-  /* ---------- Validierung ---------- */
-  function validateIdea(data) {
-    const f = {};
-    const title = String(data.title || '').trim();
-    const description = String(data.description || '').trim();
-    const location = String(data.location || '').trim();
-    if (title.length < 5) f.title = 'Gib deiner Idee einen Titel (mind. 5 Zeichen).';
-    else if (title.length > 80) f.title = 'Der Titel darf höchstens 80 Zeichen lang sein.';
-    if (description.length < 20) f.description = 'Beschreib kurz, was ihr macht (mind. 20 Zeichen).';
-    else if (description.length > 300) f.description = 'Die Beschreibung darf höchstens 300 Zeichen lang sein.';
-    if (!CAT[data.category]) f.category = 'Bitte wähle eine Kategorie.';
-    if (!BUDGETS.some(b => b.value === data.budget)) f.budget = 'Bitte wähle ein Budget.';
-    if (!DURATIONS.includes(data.duration)) f.duration = 'Bitte wähle eine Dauer.';
-    if (!TIME[data.timeOfDay]) f.timeOfDay = 'Bitte wähle eine Tageszeit.';
-    if (location.length < 3) f.location = 'Wo trefft ihr euch? (mind. 3 Zeichen)';
-    else if (location.length > 70) f.location = 'Höchstens 70 Zeichen.';
-    if (Object.keys(f).length) throw validationError(f);
-    return { title, description, category: data.category, budget: data.budget, duration: data.duration, timeOfDay: data.timeOfDay, location,
-      emoji: String(data.emoji || CAT[data.category].emoji).slice(0, 8) };
-  }
-  function validateProfilePatch(p) {
-    const f = {};
-    const out = {};
-    if ('name' in p) {
-      const name = String(p.name || '').trim().replace(/\s+/g, ' ');
-      if (name.length < 2) f.name = 'Bitte gib deinen Vornamen ein (mind. 2 Zeichen).';
-      else if (name.length > 30) f.name = 'Höchstens 30 Zeichen.';
-      else if (!/^[\p{L}][\p{L}' -]*$/u.test(name)) f.name = 'Bitte nur Buchstaben verwenden.';
-      out.name = name;
-    }
-    if ('birthdate' in p) {
-      const age = Util.ageFrom(p.birthdate);
-      if (!p.birthdate || age === null) f.birthdate = 'Bitte gib dein Geburtsdatum ein.';
-      else if (age < 18) f.birthdate = 'Du musst mindestens 18 Jahre alt sein, um asap zu nutzen.';
-      else if (age > 100) f.birthdate = 'Bitte überprüfe das Geburtsdatum.';
-      out.birthdate = p.birthdate;
-    }
-    if ('gender' in p) { if (!GENDER[p.gender]) f.gender = 'Bitte wähle eine Option.'; out.gender = p.gender; }
-    if ('interestedIn' in p) {
-      const arr = Array.isArray(p.interestedIn) ? p.interestedIn.filter(g => GENDER[g]) : [];
-      if (!arr.length) f.interestedIn = 'Bitte wähle, für wen du dich interessierst.';
-      out.interestedIn = arr;
-    }
-    if ('city' in p) {
-      const city = String(p.city || '').trim();
-      if (city.length < 2) f.city = 'Bitte gib deine Stadt oder deinen Stadtteil ein.';
-      else if (city.length > 60) f.city = 'Höchstens 60 Zeichen.';
-      out.city = city;
-    }
-    if ('bio' in p) {
-      const bio = String(p.bio || '').trim();
-      if (bio.length > 300) f.bio = 'Höchstens 300 Zeichen.';
-      out.bio = bio;
-    }
-    if ('interests' in p) {
-      const tags = Array.isArray(p.interests) ? [...new Set(p.interests.filter(t => INTEREST_TAGS.includes(t)))] : [];
-      if (tags.length < 3) f.interests = 'Wähle mindestens 3 Interessen.';
-      else if (tags.length > 10) f.interests = 'Höchstens 10 Interessen.';
-      out.interests = tags;
-    }
-    if ('photos' in p) {
-      const photos = Array.isArray(p.photos) ? p.photos.slice(0, 3).map((ph, i) => ({
-        id: ph.id || Util.uid('ph' + i), colors: [String(ph.colors[0]), String(ph.colors[1])], emoji: ph.emoji || null, pattern: Number(ph.pattern) || 0,
-      })) : [];
-      if (!photos.length) f.photos = 'Wähle mindestens ein Profilbild.';
-      out.photos = photos;
-    }
-    if ('onboardingStep' in p) out.onboardingStep = Math.max(0, Number(p.onboardingStep) || 0);
-    if (Object.keys(f).length) throw validationError(f);
-    return out;
-  }
 
   /* ===========================================================================
      ÖFFENTLICHE API
@@ -535,19 +431,15 @@ const DataService = (() => {
       return ready;
     },
     get pendingRequests() { return pending; },
+    backend: 'mock',
     get storageMode() { return SafeStorage.local.persistent ? 'localStorage' : 'Arbeitsspeicher'; },
 
     /* ----- Auth ----- */
     // BACKEND: POST /api/v1/auth/register  { email, password }
     register({ email, password, passwordRepeat }) {
       return request('POST /auth/register', async () => {
-        const f = {};
-        const em = String(email || '').trim().toLowerCase();
-        if (!Util.isValidEmail(em)) f.email = 'Bitte gib eine gültige E-Mail-Adresse ein.';
-        if (String(password || '').length < 8) f.password = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
-        if (password !== passwordRepeat) f.passwordRepeat = 'Die Passwörter stimmen nicht überein.';
-        if (!f.email && read(db => db.users.some(u => u.email.toLowerCase() === em))) f.email = 'Diese E-Mail-Adresse ist bereits registriert.';
-        if (Object.keys(f).length) throw validationError(f);
+        const em = validateCredentials({ email, password, passwordRepeat });
+        if (read(db => db.users.some(u => u.email.toLowerCase() === em))) throw validationError({ email: 'Diese E-Mail-Adresse ist bereits registriert.' });
         const passwordHash = await hashPassword(em, password);
         const user = write(db => {
           if (db.users.some(u => u.email.toLowerCase() === em)) throw validationError({ email: 'Diese E-Mail-Adresse ist bereits registriert.' });
@@ -637,21 +529,12 @@ const DataService = (() => {
         const liked = new Set(db.likes.filter(l => l.fromUserId === me.id).map(l => l.ideaId));
         const passed = new Set(db.passes.filter(p => p.userId === me.id).map(p => p.ideaId));
         const matched = new Set(db.matches.filter(m => m.userIds.includes(me.id)).map(m => otherIdOf(m, me.id)));
-        let items = db.ideas
+        const items = db.ideas
           .filter(i => i.active && !i.deletedAt && i.ownerId !== me.id && !liked.has(i.id) && !passed.has(i.id) && !matched.has(i.ownerId))
           .map(i => ({ i, owner: userById(db, i.ownerId) }))
           .filter(x => x.owner && compatible(me, x.owner))
           .map(x => ({ idea: publicIdea(x.i), owner: publicUser(x.owner, me), distanceKm: distanceKm(me, x.owner) }));
-        const totalBeforeFilter = items.length;
-        if (filters.categories && filters.categories.length) items = items.filter(x => filters.categories.includes(x.idea.category));
-        if (filters.budgets && filters.budgets.length) items = items.filter(x => filters.budgets.includes(x.idea.budget));
-        if (filters.times && filters.times.length) items = items.filter(x => filters.times.includes(x.idea.timeOfDay));
-        if (filters.maxDistance) items = items.filter(x => x.distanceKm <= filters.maxDistance);
-        // Reihenfolge: täglich wechselnd, Nähe leicht bevorzugt
-        const day = new Date().toDateString();
-        const score = x => (Util.hash(me.id + day + x.idea.id) % 1000) / 1000 * 18 + x.distanceKm * 0.35;
-        items.sort((a, b) => score(a) - score(b));
-        return { locked: false, items, totalBeforeFilter };
+        return { locked: false, items: filterAndSortFeed(items, filters, me.id), totalBeforeFilter: items.length };
       }));
     },
     // BACKEND: POST /api/v1/ideas/:ideaId/likes  { message? }
@@ -805,9 +688,7 @@ const DataService = (() => {
           const me = requireMe(db);
           const m = db.matches.find(x => x.id === matchId && x.userIds.includes(me.id));
           if (!m) throw new ApiError('Dieser Chat existiert nicht (mehr).', 'NOT_FOUND');
-          const t = String(text || '').trim();
-          if (!t) throw new ApiError('Die Nachricht ist leer.', 'VALIDATION');
-          if (t.length > 1000) throw new ApiError('Die Nachricht ist zu lang (max. 1000 Zeichen).', 'VALIDATION');
+          const t = validateMessage(text);
           const msg = { id: Util.uid('msg'), matchId: m.id, senderId: me.id, text: t, createdAt: Date.now(), read: false };
           db.messages.push(msg);
           if (!(m.seenBy || []).includes(me.id)) m.seenBy = [...(m.seenBy || []), me.id];
@@ -828,6 +709,8 @@ const DataService = (() => {
         return message;
       });
     },
+    /** „schreibt …“ an die andere Person senden – im Mock gibt es kein Gegenüber, daher ohne Wirkung. */
+    sendTyping() {},
     // BACKEND: POST /api/v1/matches/:matchId/proposals  { dateTime }
     proposeDate(matchId, dateTime) {
       return request('POST /matches/:id/proposals', () => {
@@ -835,10 +718,7 @@ const DataService = (() => {
           const me = requireMe(db);
           const m = db.matches.find(x => x.id === matchId && x.userIds.includes(me.id));
           if (!m) throw new ApiError('Dieser Chat existiert nicht (mehr).', 'NOT_FOUND');
-          const d = new Date(dateTime);
-          if (isNaN(d)) throw validationError({ dateTime: 'Bitte wähle Datum und Uhrzeit.' });
-          if (d.getTime() < Date.now() + 10 * MIN) throw validationError({ dateTime: 'Der Termin muss in der Zukunft liegen.' });
-          if (d.getTime() > Date.now() + 365 * DAY) throw validationError({ dateTime: 'Bitte wähle einen Termin innerhalb der nächsten 12 Monate.' });
+          const d = validateProposalDate(dateTime);
           const proposal = { id: Util.uid('prop'), matchId: m.id, proposedBy: me.id, dateTime: d.toISOString(), status: 'proposed', createdAt: Date.now(), respondedAt: null };
           db.proposals.push(proposal);
           const other = userById(db, otherIdOf(m, me.id));
@@ -1007,6 +887,7 @@ const DataService = (() => {
 
     /* ----- Entwickler-Funktionen (NUR für den Prototyp – in Produktion entfernen!) ----- */
     dev: {
+      mode: 'mock',
       testAccounts() {
         const db = loadDB();
         return TEST_ACCOUNTS.map(a => {
@@ -1073,19 +954,7 @@ const DataService = (() => {
         tick();
         return n;
       },
-      /** Prüft, ob Supabase mit URL und Key aus der .env erreichbar ist (Auth-Health-Endpunkt, braucht noch keine Tabellen).
-          Gibt { configured, ok, status, ms, version } zurück – wirft nicht. */
-      async checkSupabase() {
-        if (!isSupabaseConfigured) return { configured: false, ok: false };
-        const start = performance.now();
-        try {
-          const res = await fetch(`${supabaseUrl}/auth/v1/health`, { headers: { apikey: supabaseAnonKey } });
-          const body = await res.json().catch(() => ({}));
-          return { configured: true, ok: res.ok, status: res.status, ms: Math.round(performance.now() - start), version: body.version || '' };
-        } catch (e) {
-          return { configured: true, ok: false, status: 0, ms: Math.round(performance.now() - start), error: e.message };
-        }
-      },
+      checkSupabase: checkSupabaseHealth,
       stats() {
         const db = loadDB();
         if (!db) return { queue: 0, users: 0, ideas: 0, likes: 0, matches: 0, messages: 0 };
@@ -1097,4 +966,4 @@ const DataService = (() => {
   return api;
 })();
 
-export { DataService };
+export { MockBackend };

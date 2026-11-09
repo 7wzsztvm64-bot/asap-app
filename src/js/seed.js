@@ -11,6 +11,14 @@ const TEST_ACCOUNTS = [
   { id: 'u_test2', email: 'test2@datedate.app', password: TEST_PASSWORD },
 ];
 
+/** Feste UUID für einen Seed-Datensatz (z. B. 'u_test1' → '5eed0000-…'), damit Seed-Skript und
+    Entwickler-Panel im Supabase-Modus dieselben IDs kennen. Nur für Testdaten! */
+function seedUuid(seedId) {
+  const a = Util.hash(seedId).toString(16).padStart(8, '0');
+  const b = Util.hash(seedId + '#').toString(16).padStart(8, '0');
+  return `5eed0000-0000-4000-8000-${(a + b).slice(0, 12)}`;
+}
+
 /** Kurzschreibweise für Date-Ideen. */
 function I(emoji, title, category, budget, duration, timeOfDay, location, description) {
   return { emoji, title, category, budget, duration, timeOfDay, location, description };
@@ -372,4 +380,4 @@ async function buildSeedDB() {
   };
 }
 
-export { TEST_PASSWORD, TEST_ACCOUNTS, I, SEED_PEOPLE, birthdateForAge, upcomingSaturday, buildSeedDB };
+export { TEST_PASSWORD, TEST_ACCOUNTS, seedUuid, I, SEED_PEOPLE, birthdateForAge, upcomingSaturday, buildSeedDB };

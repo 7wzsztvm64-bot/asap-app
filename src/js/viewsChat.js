@@ -196,7 +196,11 @@ const ChatView = {
 
     /* ---- Nachricht senden (optimistisch) ---- */
     const autoGrow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; };
-    ta.addEventListener('input', () => { autoGrow(); sendBtn.disabled = !ta.value.trim() || !conv; });
+    ta.addEventListener('input', () => {
+      autoGrow();
+      sendBtn.disabled = !ta.value.trim() || !conv;
+      if (conv && ta.value.trim()) DataService.sendTyping(conv.match.id);
+    });
     ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
     bindSubmit(form, send);
     async function send() {

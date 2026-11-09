@@ -1,5 +1,6 @@
 import { Util, raw, html, icon, logo, CATEGORIES, CAT, BUDGETS, TIMES, DURATIONS, GENDERS, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS } from './core.js';
 import { DataService } from './dataService.js';
+import { t } from '../i18n/index.js';
 import { $, $$, shortCity, bindSubmit, toggleIn, UI, App } from './uiCore.js';
 
 /* =============================================================================
@@ -101,11 +102,17 @@ const RegisterView = {
           <div class="input-wrap"><input id="re-pw2" class="input" type="password" name="passwordRepeat" autocomplete="new-password" placeholder="••••••••">
           <button type="button" class="reveal" data-action="reveal" aria-label="Passwort anzeigen">${icon('eye', 20)}</button></div></div>
         <button class="btn btn-primary btn-block" type="button" data-submit>Konto erstellen</button>
-        <p class="legal">Prototyp: Bitte keine echten Passwörter verwenden. Alle Daten bleiben lokal in deinem Browser.</p>
+        <p class="legal">${t('auth.registerNote.' + DataService.backend)}</p>
         <p class="auth-switch">Schon dabei? <a href="#/login" class="link-btn">Anmelden</a></p>
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
+    // Mit E-Mail-Bestätigung (Supabase): Hinweis statt direktem Login
+    function showConfirmation(email) {
+      $('.auth-form', el).outerHTML = String(html`<div class="auth-form">${UI.empty({ emoji: '📬', title: t('confirmEmail.title'),
+        text: t('confirmEmail.text', { email }), actions: [{ label: t('confirmEmail.toLogin'), go: '#/login' }] })}
+        <p class="legal">${t('confirmEmail.hint')}</p></div>`);
+    }
     const meter = $('.strength', form);
     form.password.addEventListener('input', () => { meter.dataset.level = passwordStrength(form.password.value); });
     bindSubmit(form, async () => {
@@ -121,7 +128,8 @@ const RegisterView = {
       UI.clearErrors(form);
       UI.busy(btn, true);
       try {
-        await DataService.register(data);
+        const res = await DataService.register(data);
+        if (res && res.needsConfirmation) { showConfirmation(res.email); return; }
         UI.toast({ icon: '🎉', title: 'Willkommen bei asap!', text: 'Erzähl uns kurz etwas über dich.', light: true });
       } catch (err) {
         UI.busy(btn, false);

@@ -47,7 +47,7 @@ const ProfileView = {
           <button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">Entwickler-Panel</span>${icon('chevronRight', 18)}</button>
           <button type="button" class="si danger" data-action="logout">${icon('logout', 20)}<span class="grow">Abmelden</span></button>
         </div>
-        <p class="foot-note">asap · Entwicklungsversion<br>Alle Daten liegen lokal in deinem Browser (${DataService.storageMode}).</p>`;
+        <p class="foot-note">${t('profile.version')}<br>${t('profile.storage.' + DataService.backend, { mode: DataService.storageMode })}</p>`;
     }
     async function load(silent = false) {
       try {
@@ -284,17 +284,19 @@ const DevPanel = {
     const accounts = DataService.dev.testAccounts();
     const s = DataService.dev.getSettings();
     const st = DataService.dev.stats();
+    const mock = DataService.dev.mode === 'mock';
     panel.innerHTML = html`<div class="dev-head">${icon('gear', 20)}<h3>Entwickler-Panel</h3>
         <button type="button" class="icon-btn" data-dev="close" aria-label="Schließen">${icon('close', 20)}</button></div>
       <div class="dev-body">
         <div class="dev-section"><h4>Aktuell eingeloggt</h4>
           ${me ? html`<div class="dev-current">${UI.avatar(me, 38)}<div style="min-width:0;flex:1"><div class="n">${me.name || '(im Onboarding)'}${me.isBot ? html`<span class="dev-badge">simuliert</span>` : ''}</div><div class="e">${me.email}</div></div>
             <button type="button" class="btn btn-sm dev-btn" data-dev="logout">Abmelden</button></div>` : html`<div class="dev-note" style="margin:0">Niemand eingeloggt.</div>`}</div>
+        <div class="dev-section"><h4>${t('dev.backend')}</h4><div class="dev-note" style="margin:0"><b>${DataService.storageMode}</b>${mock ? '' : html` · ${t('dev.mockOnly')}`}</div></div>
         <div class="dev-section"><h4>Test-Logins</h4>
           ${accounts.map(a => html`<div class="dev-account"><div class="grow"><div class="n">${a.name}</div><code>${a.email}</code><code>Passwort: ${a.password}</code></div>
             <button type="button" class="btn btn-sm dev-btn ${me && me.id === a.id ? 'active' : ''}" data-dev="switch" data-id="${a.id}" ${me && me.id === a.id ? raw('disabled') : ''}>${me && me.id === a.id ? 'Aktiv' : 'Wechseln'}</button></div>`)}
-          <div class="dev-note">Wechsel ohne Passwort, um beide Seiten eines Likes oder Matches zu testen. Tipp: Ohne „Eingeloggt bleiben“ angemeldet, kannst du in zwei Browser-Tabs gleichzeitig zwei Accounts nutzen.</div></div>
-        <div class="dev-section"><h4>Als beliebige Person einloggen</h4>
+          <div class="dev-note">${mock ? 'Wechsel ohne Passwort, um beide Seiten eines Likes oder Matches zu testen. Tipp: Ohne „Eingeloggt bleiben“ angemeldet, kannst du in zwei Browser-Tabs gleichzeitig zwei Accounts nutzen.' : t('dev.supabaseLogins')}</div></div>
+        ${mock ? html`<div class="dev-section"><h4>Als beliebige Person einloggen</h4>
           <div class="dev-row"><select class="select" data-dev-select aria-label="Person auswählen"><option value="">Lade …</option></select>
             <button type="button" class="btn btn-sm dev-btn" data-dev="switch-select">Wechseln</button></div>
           <div class="dev-note">Z. B. als Lena einloggen und eine Anfrage von Jonas annehmen – oder schauen, wie dein Like auf der anderen Seite ankommt.</div></div>
@@ -304,15 +306,15 @@ const DevPanel = {
             <label class="switch"><input type="checkbox" data-dev="auto" ${s.autoReplies ? raw('checked') : ''} aria-label="Auto-Antworten"><span class="track"></span></label></div>
           <div class="dev-row" style="margin-top:12px;flex-wrap:wrap">
             <button type="button" class="btn btn-sm dev-btn" data-dev="sim-like" ${me ? '' : raw('disabled')}>❤️ Anfrage simulieren</button>
-            <button type="button" class="btn btn-sm dev-btn" data-dev="ffwd">⏩ Sofort ausführen (${st.queue})</button></div></div>
+            <button type="button" class="btn btn-sm dev-btn" data-dev="ffwd">⏩ Sofort ausführen (${st.queue})</button></div></div>` : ''}
         <div class="dev-section"><h4>${t('dev.supabase.title')}</h4>
           <button type="button" class="btn btn-sm dev-btn btn-block" data-dev="check-supabase">🔌 ${t('dev.supabase.check')}</button>
           <div class="dev-note">${t('dev.supabase.note')}</div></div>
-        <div class="dev-section"><h4>Daten</h4><div class="dev-stats">${this.statsHtml(st)}</div>
+        ${mock ? html`<div class="dev-section"><h4>Daten</h4><div class="dev-stats">${this.statsHtml(st)}</div>
           ${this.confirmReset ? html`<div class="dev-note" style="color:#FFB4B4">Wirklich alles zurücksetzen? Registrierte Konten, Likes und Chats gehen verloren.</div>
             <div class="dev-row" style="margin-top:8px"><button type="button" class="btn btn-sm btn-danger" style="flex:1" data-dev="reset-yes">Ja, zurücksetzen</button><button type="button" class="btn btn-sm dev-btn" data-dev="reset-no">Abbrechen</button></div>`
             : html`<button type="button" class="btn btn-sm btn-danger btn-block" style="margin-top:12px" data-dev="reset">${icon('refresh', 16)} Alle Daten zurücksetzen</button>`}
-        </div>
+        </div>` : ''}
       </div>`;
     this.fillUsers();
   },
