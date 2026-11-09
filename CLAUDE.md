@@ -17,6 +17,7 @@
 - `npm run dev` – Entwicklungsserver (http://localhost:5173); im Browser ist `window.asap` zum Debuggen verfügbar
 - `npm run build` – Produktionsbuild nach `dist/`
 - `npm run preview` – Build lokal ansehen
+- `npm run test:db` – spielt alle Migrationen in ein lokales Test-Postgres (PGlite) und prüft die RLS-Regeln
 
 ## Struktur
 - `index.html` – Grundgerüst (Smartphone-Rahmen auf dem Desktop, App-Container)
@@ -29,6 +30,8 @@
 - `src/js/views*.js` – Ansichten (Auth/Onboarding, Feed/Anfragen/Profile, Chats/Dates, eigenes Profil/Dev-Panel)
 - `src/js/pwa.js` – Icon, Manifest, Service Worker (nur im Produktionsbuild)
 - `src/i18n/` – Übersetzungen `de.json`, `en.json` und die Funktion `t()`
+- `supabase/migrations/` – SQL-Migrationen (Schema, RLS); im Supabase-Dashboard per SQL Editor einspielen, in Reihenfolge der Dateinamen
+- `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
 - `prototype/dabei-prototype.html` – ursprünglicher Single-File-Prototyp, **nur Referenz, nicht ändern**
 
