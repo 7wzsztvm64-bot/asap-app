@@ -116,7 +116,11 @@
     "SERVER": "Da ist etwas schiefgelaufen. Bitte versuch es gleich noch einmal.",
     "NOT_CONFIGURED": "Supabase ist nicht eingerichtet – .env prüfen und den Dev-Server neu starten.",
     "missingField": "Fehlt noch.",
-    "EMAIL_NOT_AUTHORIZED": "Die Registrierung ist im Moment nur für freigeschaltete Test-Adressen möglich."
+    "EMAIL_NOT_AUTHORIZED": "Die Registrierung ist im Moment nur für freigeschaltete Test-Adressen möglich.",
+    "LIKE_LIMIT": "Du hast heute schon sehr viele Ideen gelikt. Morgen geht’s weiter!",
+    "MESSAGE_LIMIT": "Du schreibst gerade sehr schnell – warte bitte einen Moment.",
+    "IDEA_DAILY_LIMIT": "Du hast heute schon viele Ideen angelegt. Morgen kannst du weitere veröffentlichen.",
+    "PROPOSAL_LIMIT": "Du hast schon drei offene Terminvorschläge – warte auf eine Antwort."
   },
   "validation": {
     "email": "Bitte gib eine gültige E-Mail-Adresse ein.",

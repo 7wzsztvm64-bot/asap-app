@@ -116,6 +116,36 @@ test('Melden: höchstens 10 Meldungen pro Tag', async () => {
   await t.db.query(`delete from public.reports`);
 });
 
+/* ---------- #19 Missbrauchsschutz ---------- */
+test('Missbrauchsschutz: 20 Nachrichten pro Minute', async () => {
+  await t.as(MIA);
+  for (let i = 0; i < 19; i++) await t.db.query(`insert into public.messages (match_id, sender_id, text) values ($1, $2, $3)`, [MATCH, MIA, 'Nachricht ' + i]);
+  await assert.rejects(t.db.query(`insert into public.messages (match_id, sender_id, text) values ($1, $2, 'zu viel')`, [MATCH, MIA]), code('MESSAGE_LIMIT'));
+  await t.asAdmin();
+  await t.db.query(`delete from public.messages where sender_id = $1 and text like 'Nachricht %'`, [MIA]);
+});
+
+test('Missbrauchsschutz: 50 Likes pro Tag, 3 offene Terminvorschläge pro Match', async () => {
+  await t.asAdmin();
+  // 50 Likes von Lena innerhalb der letzten 24 Std. simulieren (auf Hilfs-Ideen von Jonas)
+  for (let i = 0; i < 50; i++) {
+    const id = `30000000-0000-0000-0000-${String(i).padStart(12, '0')}`;
+    await t.db.query(`insert into public.ideas (id, owner_id, emoji, title, description, category, budget, duration, time_of_day, location, deleted_at, created_at)
+      values ($1, $2, '🎭', 'Hilfsidee Nummer', 'Nur für den Test der Obergrenze.', 'Kultur', '€', '1–2 Std.', 'Abends', 'Frankfurt', now(), now() - interval '2 days')`, [id, MIA]);
+    await t.db.query(`insert into public.likes (from_user_id, to_user_id, idea_id, status) values ($1, $2, $3, 'declined')`, [JONAS, MIA, id]);
+  }
+  await t.as(JONAS);
+  await assert.rejects(t.db.query(`select public.like_idea($1, null)`, [I_LENA]), code('LIKE_LIMIT'));
+  await t.asAdmin();
+  await t.db.query(`delete from public.ideas where title = 'Hilfsidee Nummer'`);
+
+  await t.as(JONAS);
+  for (let i = 1; i <= 2; i++) await t.db.query(`insert into public.proposals (match_id, proposed_by, date_time) values ($1, $2, now() + interval '${i + 3} days')`, [MATCH, JONAS]);
+  await assert.rejects(t.db.query(`insert into public.proposals (match_id, proposed_by, date_time) values ($1, $2, now() + interval '9 days')`, [MATCH, JONAS]), code('PROPOSAL_LIMIT'));
+  await t.asAdmin();
+  await t.db.query(`delete from public.proposals where proposed_by = $1 and date_time > now() + interval '3 days'`, [JONAS]);
+});
+
 /* ---------- #16 Daten herunterladen ---------- */
 test('Datenexport: eigene Daten vollständig, keine Nachrichten anderer', async () => {
   await t.as(JONAS);

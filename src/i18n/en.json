@@ -116,7 +116,11 @@
     "SERVER": "Something went wrong. Please try again in a moment.",
     "NOT_CONFIGURED": "Supabase isn't set up – check .env and restart the dev server.",
     "missingField": "Still missing.",
-    "EMAIL_NOT_AUTHORIZED": "Sign-up is currently limited to approved test addresses."
+    "EMAIL_NOT_AUTHORIZED": "Sign-up is currently limited to approved test addresses.",
+    "LIKE_LIMIT": "You've liked a lot of ideas today. Come back tomorrow!",
+    "MESSAGE_LIMIT": "You're writing very fast – please wait a moment.",
+    "IDEA_DAILY_LIMIT": "You've created a lot of ideas today. You can publish more tomorrow.",
+    "PROPOSAL_LIMIT": "You already have three open date proposals – wait for a reply."
   },
   "validation": {
     "email": "Please enter a valid email address.",
