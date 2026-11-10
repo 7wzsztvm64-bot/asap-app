@@ -1,6 +1,6 @@
 import { Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
-import { $, $$, shortCity, toggleIn, UI, App } from './uiCore.js';
+import { $, $$, shortCity, toggleIn, bindSubmit, UI, App } from './uiCore.js';
 import { IdeaForm } from './viewsAuth.js';
 import { t, getLang, setLang, LANGS } from '../i18n/index.js';
 
@@ -44,6 +44,7 @@ const ProfileView = {
         <div class="section-title">${t('profile.account')}</div>
         <div class="settings-list">
           <div class="si">${icon('mail', 20)}<span class="grow">${t('auth.email')}</span><span class="val">${me.email}</span></div>
+          <button type="button" class="si" data-go="#/password">${icon('lock', 20)}<span class="grow">${t('password.change')}</span>${icon('chevronRight', 18)}</button>
           <button type="button" class="si" data-go="#/profile/blocked">${icon('ban', 20)}<span class="grow">${t('blocked.title')}</span>${icon('chevronRight', 18)}</button>
           <div class="si">🌐<span class="grow">${t('lang.label')}</span><span class="seg" style="flex:none">${LANGS.map(l => html`<button type="button" class="${l === getLang() ? 'is-on' : ''}" data-lang="${l}" aria-pressed="${l === getLang()}">${t('lang.' + l)}</button>`)}</span></div>
           ${DevPanel.enabled ? html`<button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">${t('dev.title')}</span>${icon('chevronRight', 18)}</button>` : ''}
@@ -278,6 +279,36 @@ const IdeaEditView = {
   },
 };
 
+/* ---------- Neues Passwort (nach dem Mail-Link oder im Profil) ---------- */
+const PasswordView = {
+  async render(el, params, ctx) {
+    el.innerHTML = html`<header class="topbar bordered"><button type="button" class="icon-btn back" data-action="back" data-fallback="#/profile" aria-label="${t('common.back')}">${icon('back')}</button>
+      <div class="topbar-title sm">${t('password.newTitle')}</div></header>
+      <div class="scroll"><form class="pad" novalidate style="padding-top:18px">
+        <p class="hint" style="margin:0 0 16px">${t('password.newSub')}</p>
+        <div class="field" data-field="password"><label class="label" for="np-pw">${t('password.new')} <span class="count">${t('auth.passwordHint')}</span></label>
+          <input id="np-pw" class="input" type="password" name="password" autocomplete="new-password" placeholder="••••••••"></div>
+        <div class="field" data-field="passwordRepeat"><label class="label" for="np-pw2">${t('auth.passwordRepeat')}</label>
+          <input id="np-pw2" class="input" type="password" name="passwordRepeat" autocomplete="new-password" placeholder="••••••••"></div>
+      </form></div>
+      <div class="sticky-foot"><button type="button" class="btn btn-primary btn-block" data-action="save">${t('password.save')}</button></div>`;
+    const form = $('form', el);
+    const save = $('[data-action="save"]', el);
+    const submit = async () => {
+      if (UI.isBusy(save)) return;
+      UI.clearErrors(form);
+      UI.busy(save, true);
+      try {
+        await DataService.updatePassword({ password: form.password.value, passwordRepeat: form.passwordRepeat.value });
+        UI.toast({ icon: '🔑', title: t('password.saved'), light: true, duration: 2600 });
+        App.go(App.homeFor(App.user), { replace: true });
+      } catch (err) { UI.busy(save, false); UI.handleError(err, form); }
+    };
+    save.addEventListener('click', submit);
+    bindSubmit(form, submit);
+  },
+};
+
 /* ---------- Blockierte Personen ---------- */
 const BlockedUsersView = {
   async render(el, params, ctx) {
@@ -394,4 +425,4 @@ const DevPanel = {
   },
 };
 
-export { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, DevPanel };
+export { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, DevPanel };

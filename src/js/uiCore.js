@@ -3,7 +3,7 @@ import { DataService } from './dataService.js';
 import { LoginView, RegisterView, OnboardingView } from './viewsAuth.js';
 import { FeedView, RequestsView, UserProfileView } from './viewsFeed.js';
 import { ChatsView, ChatView, DatesView } from './viewsChat.js';
-import { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, DevPanel } from './viewsProfile.js';
+import { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, DevPanel } from './viewsProfile.js';
 
 import { t, t as i18n, onLangChange } from '../i18n/index.js'; // i18n: wo „t“ als Schleifenvariable belegt ist
 /* =============================================================================
@@ -425,12 +425,15 @@ const App = {
       { name: 'profile', re: /^#\/profile$/, view: ProfileView, tab: 'profile', depth: 0 },
       { name: 'profile-edit', re: /^#\/profile\/edit$/, view: ProfileEditView, depth: 1 },
       { name: 'blocked', re: /^#\/profile\/blocked$/, view: BlockedUsersView, depth: 1 },
+      { name: 'password', re: /^#\/password$/, view: PasswordView, depth: 1 },
       { name: 'idea-new', re: /^#\/ideas\/new$/, view: IdeaEditView, depth: 2 },
       { name: 'idea-edit', re: /^#\/ideas\/([\w-]+)\/edit$/, view: IdeaEditView, depth: 2 },
       { name: 'user', re: /^#\/user\/([\w-]+)$/, view: UserProfileView, depth: 2 },
     ];
   },
   needsOnboarding(u) { return !!u && (!u.profileComplete || !u.firstIdeaCreated); },
+  /** Seiten, die auch während des Onboardings erreichbar sind (z. B. neues Passwort nach dem Mail-Link). */
+  allowedDuringOnboarding: ['onboarding', 'password'],
   homeFor(u) { return !u ? '#/login' : this.needsOnboarding(u) ? '#/onboarding' : '#/feed'; },
 
   go(hash, { replace = false } = {}) {
@@ -466,7 +469,7 @@ const App = {
     if (!route.guest && !u) return this.go('#/login', { replace: true });
     if (u && !route.guest) {
       const needs = this.needsOnboarding(u);
-      if (needs && route.name !== 'onboarding') return this.go('#/onboarding', { replace: true });
+      if (needs && !this.allowedDuringOnboarding.includes(route.name)) return this.go('#/onboarding', { replace: true });
       if (!needs && route.name === 'onboarding') return this.go('#/feed', { replace: true });
     }
     // ---- Verlauf & Richtung der Animation ----
@@ -586,6 +589,11 @@ const App = {
     await DataService.init();
     await this.refreshUser();
     $('#views').innerHTML = '';
+    // Über den „Passwort vergessen“-Link gekommen → direkt zum Setzen des neuen Passworts
+    if (this.user && DataService.consumePasswordRecovery()) {
+      history.replaceState(null, '', '#/password');
+      setTimeout(() => UI.toast({ icon: '🔑', title: t('password.recoveryToast'), light: true, duration: 3600 }), 400);
+    }
 
     // ---- Globale Ereignisse (später: WebSocket/Push vom Backend) ----
     DataService.on('change', () => this.refreshBadges());

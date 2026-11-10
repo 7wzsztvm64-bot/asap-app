@@ -34,6 +34,7 @@ const DataService = (() => {
   let realtimeUserId = null;
   let realtimeStart = null;        // laufender/abgeschlossener Start der Realtime-Abos
   let knownUserId = null;          // zuletzt bekannte eingeloggte Person (erkennt Wechsel in anderen Tabs)
+  let recoveryPending = false;     // App wurde über einen „Passwort vergessen“-Link geöffnet
 
   /* ---------- Event-Bus ---------- */
   function on(type, fn) {
@@ -293,6 +294,8 @@ const DataService = (() => {
       if (ready) return ready;
       ready = (async () => {
         if (!supabase) throw apiError('NOT_CONFIGURED');
+        // Link aus „Passwort vergessen“? Muss VOR getSession() erkannt werden – Supabase entfernt den Hash danach.
+        recoveryPending = /[#&]type=recovery\b/.test(location.hash);
         // getSession() verarbeitet auch den Bestätigungslink aus der Adresszeile (#access_token=…)
         const { data } = await supabase.auth.getSession();
         knownUserId = data.session ? data.session.user.id : null;
@@ -302,6 +305,8 @@ const DataService = (() => {
       return ready;
     },
     get pendingRequests() { return pending; },
+    /** true (einmalig), wenn die App über einen „Passwort vergessen“-Link geöffnet wurde. */
+    consumePasswordRecovery() { const r = recoveryPending; recoveryPending = false; return r; },
 
     /* ----- Auth ----- */
     register({ email, password, passwordRepeat }) {
@@ -324,6 +329,29 @@ const DataService = (() => {
         const { data, error } = await supabase.auth.signInWithPassword({ email: em, password });
         if (error) throw error;
         return signedIn(data.session);
+      });
+    },
+    /** Link zum Zurücksetzen per Mail anfordern. Antwortet immer gleich – verrät nicht, ob es das Konto gibt. */
+    requestPasswordReset(email) {
+      return request('auth.resetPassword', async () => {
+        const em = String(email || '').trim().toLowerCase();
+        if (!Util.isValidEmail(em)) throw validationError({ email: t('validation.email') });
+        const { error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo: location.origin + location.pathname });
+        if (error) throw error;
+        return true;
+      });
+    },
+    /** Neues Passwort setzen (nach dem Mail-Link oder im Profil). */
+    updatePassword({ password, passwordRepeat }) {
+      return request('auth.updateUser', async () => {
+        const f = {};
+        if (String(password || '').length < 8) f.password = t('validation.passwordMin');
+        if (password !== passwordRepeat) f.passwordRepeat = t('validation.passwordMismatch');
+        if (Object.keys(f).length) throw validationError(f);
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error && error.code === 'same_password') throw validationError({ password: t('validation.samePassword') });
+        if (error) throw error;
+        return true;
       });
     },
     logout() {

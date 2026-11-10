@@ -164,7 +164,8 @@
       "tooFar": "Bitte wähle einen Termin innerhalb der nächsten 12 Monate."
     },
     "passwordMissing": "Bitte gib dein Passwort ein.",
-    "passwordRepeat": "Bitte wiederhole dein Passwort."
+    "passwordRepeat": "Bitte wiederhole dein Passwort.",
+    "samePassword": "Das neue Passwort muss sich vom alten unterscheiden."
   },
   "chat": {
     "proposalPreview": {
@@ -657,5 +658,20 @@
     "deleteConfirm": "Endgültig löschen",
     "deleted": "Dein Konto wurde gelöscht",
     "deletedText": "Schade, dass du gehst. Alles Gute!"
+  },
+  "password": {
+    "forgot": "Passwort vergessen?",
+    "forgotTitle": "Passwort vergessen?",
+    "forgotSub": "Wir schicken dir einen Link, mit dem du ein neues Passwort setzen kannst.",
+    "sendLink": "Link senden",
+    "linkSent": "Schau in dein Postfach",
+    "linkSentText": "Wenn es ein Konto mit dieser Adresse gibt, ist eine Mail mit einem Link unterwegs.",
+    "change": "Passwort ändern",
+    "newTitle": "Neues Passwort",
+    "newSub": "Wähle ein neues Passwort mit mindestens 8 Zeichen.",
+    "new": "Neues Passwort",
+    "save": "Passwort speichern",
+    "saved": "Dein Passwort wurde geändert",
+    "recoveryToast": "Setz jetzt dein neues Passwort"
   }
 }

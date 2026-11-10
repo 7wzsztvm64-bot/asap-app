@@ -42,6 +42,28 @@ function bindLangSwitch(root) {
   root.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
 }
 
+/** „Passwort vergessen“: Link per Mail anfordern. */
+function openForgot(prefill) {
+  UI.sheet({
+    title: t('password.forgotTitle'), subtitle: t('password.forgotSub'),
+    body: html`<div class="field" data-field="email"><label class="label" for="fg-email">${t('auth.email')}</label>
+      <input id="fg-email" class="input" type="email" autocomplete="email" inputmode="email" placeholder="${t('auth.emailPlaceholder')}" value="${prefill}"></div>`,
+    foot: html`<button type="button" class="btn btn-secondary" data-close>${t('common.cancel')}</button><button type="button" class="btn btn-primary" style="flex:1" data-send>${t('password.sendLink')}</button>`,
+    onMount(sheet, close) {
+      sheet.addEventListener('click', async e => {
+        const send = e.target.closest('[data-send]');
+        if (!send || UI.isBusy(send)) return;
+        UI.busy(send, true);
+        try {
+          await DataService.requestPasswordReset($('#fg-email', sheet).value);
+          close();
+          UI.toast({ icon: '📬', title: t('password.linkSent'), text: t('password.linkSentText'), light: true, duration: 5200 });
+        } catch (err) { UI.busy(send, false); UI.handleError(err, $('.sheet-body', sheet)); }
+      });
+    },
+  });
+}
+
 const LoginView = {
   async render(el) {
     // Test-Login-Hinweis nur mit npm run dev (im Produktionsbuild ist DataService.dev null)
@@ -55,7 +77,8 @@ const LoginView = {
         <div class="field" data-field="password"><label class="label" for="li-pw">${t('auth.password')}</label>
           <div class="input-wrap"><input id="li-pw" class="input" type="password" name="password" autocomplete="current-password" placeholder="••••••••">
           <button type="button" class="reveal" data-action="reveal" aria-label="${t('auth.showPassword')}">${icon('eye', 20)}</button></div></div>
-        <div class="auth-row"><label class="check"><input type="checkbox" name="remember" checked><span class="box">${icon('check', 14, 3)}</span>${t('auth.rememberMe')}</label></div>
+        <div class="auth-row"><label class="check"><input type="checkbox" name="remember" checked><span class="box">${icon('check', 14, 3)}</span>${t('auth.rememberMe')}</label>
+          <button type="button" class="link-btn" data-action="forgot">${t('password.forgot')}</button></div>
         <button class="btn btn-primary btn-block" type="button" data-submit>${t('auth.login')}</button>
         <p class="auth-switch">${t('auth.newHere')} <a href="#/register" class="link-btn">${t('auth.register')}</a></p>
         ${demo ? html`<div class="demo-hint"><span style="font-size:22px" aria-hidden="true">🧪</span>
@@ -67,6 +90,7 @@ const LoginView = {
     bindReveal(form);
     bindLangSwitch(form);
     form.addEventListener('click', e => {
+      if (e.target.closest('[data-action="forgot"]')) openForgot(form.email.value.trim());
       if (demo && e.target.closest('[data-action="fill"]')) {
         form.email.value = demo.email;
         form.password.value = demo.password;

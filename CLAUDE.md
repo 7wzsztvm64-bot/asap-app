@@ -39,6 +39,7 @@
 - `supabase/migrations/` – SQL-Migrationen (Schema, RLS); eingespielt mit `npm run db:migrate`, bereits angewendete stehen in `supabase_migrations.schema_migrations`. Eingespielte Dateien nie ändern, sondern neue Migration anlegen
 - `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
 - `supabase/auth/` – Auth-Einstellungen und Mail-Vorlage (übernehmen mit `npm run db:auth`)
+- Moderation: Meldungen im Supabase-Dashboard unter Schema `moderation` → `open_reports` (nicht über die API erreichbar)
 - `scripts/db.mjs` – Werkzeug für `db:migrate`, `db:seed`, `db:auth`, `db:query` (Supabase Management-API)
 - `docs/ABNAHMETEST.md` – Checkliste für den Test mit zwei Handys (#12)
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
@@ -56,5 +57,5 @@
 9. **Commits** auf Deutsch, kurz und beschreibend; nie direkt `.env` oder Schlüssel committen.
 
 ## Aktueller Stand
-- Phase 0 erledigt. Phase 1: #1–#3 und #5–#11 erledigt (App komplett DE/EN). Offen: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
+- Phase 0 erledigt. Phase 1: #1–#3 und #5–#11 erledigt (App komplett DE/EN). Phase 2: #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #19 Missbrauchsschutz erledigt; #17 Passwort vergessen gebaut (Mail-Rundweg wartet auf Brevo); #18 Foto-Upload offen (braucht Entscheidungen). Offen in Phase 1: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.

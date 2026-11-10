@@ -164,7 +164,8 @@
       "tooFar": "Please choose a date within the next 12 months."
     },
     "passwordMissing": "Please enter your password.",
-    "passwordRepeat": "Please repeat your password."
+    "passwordRepeat": "Please repeat your password.",
+    "samePassword": "The new password must differ from the old one."
   },
   "chat": {
     "proposalPreview": {
@@ -657,5 +658,20 @@
     "deleteConfirm": "Delete permanently",
     "deleted": "Your account has been deleted",
     "deletedText": "Sorry to see you go. All the best!"
+  },
+  "password": {
+    "forgot": "Forgot password?",
+    "forgotTitle": "Forgot your password?",
+    "forgotSub": "We'll send you a link to set a new password.",
+    "sendLink": "Send link",
+    "linkSent": "Check your inbox",
+    "linkSentText": "If an account exists for this address, an email with a link is on its way.",
+    "change": "Change password",
+    "newTitle": "New password",
+    "newSub": "Choose a new password with at least 8 characters.",
+    "new": "New password",
+    "save": "Save password",
+    "saved": "Your password has been changed",
+    "recoveryToast": "Now set your new password"
   }
 }
