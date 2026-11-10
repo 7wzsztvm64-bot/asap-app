@@ -18,10 +18,11 @@
 - `npm run build` – Produktionsbuild nach `dist/`
 - `npm run preview` – Build lokal ansehen
 - `npm run test:db` – spielt alle Migrationen in ein lokales Test-Postgres (PGlite) und prüft die RLS-Regeln
+- `npm run test:e2e` – Browser-Test mit zwei Personen (Jonas/Mia) gegen das echte Supabase-Projekt: liken → annehmen → Match → Chat in Echtzeit, Foto-Upload mit Freigabe; nutzt das installierte Chrome (`playwright-core`), seedet vorher und nachher (`HEADED=1` zum Zuschauen)
 - `npm run db:migrate` – spielt fehlende Migrationen ins echte Supabase-Projekt ein (braucht `SUPABASE_ACCESS_TOKEN` in `.env`); vorher `npm run test:db`
 - `npm run db:seed` – Testpersonen in Supabase neu anlegen (alle `@datedate.app`-Konten, Passwort `Test1234`; löscht vorher die alten)
 - `npm run db:auth` – Auth-Einstellungen aus `supabase/auth/` übernehmen (+ SMTP aus `.env`, falls gesetzt)
-- `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration)
+- `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration; `--json` für JSON-Ausgabe)
 
 ## Struktur
 - `index.html` – Grundgerüst (Smartphone-Rahmen auf dem Desktop, App-Container)
@@ -38,8 +39,10 @@
 - `src/i18n/` – Übersetzungen `de.json`, `en.json` und die Funktion `t()`
 - `supabase/migrations/` – SQL-Migrationen (Schema, RLS); eingespielt mit `npm run db:migrate`, bereits angewendete stehen in `supabase_migrations.schema_migrations`. Eingespielte Dateien nie ändern, sondern neue Migration anlegen
 - `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
+- `e2e/` – Browser-Tests (`npm run test:e2e`); neue Hauptabläufe hier ergänzen
 - `supabase/auth/` – Auth-Einstellungen und Mail-Vorlage (übernehmen mit `npm run db:auth`)
-- Moderation: Meldungen im Supabase-Dashboard unter Schema `moderation` → `open_reports` (nicht über die API erreichbar)
+- Moderation: im Supabase-Dashboard unter Schema `moderation` (nicht über die API erreichbar): `open_reports` (Meldungen), `pending_photos` (Fotos zur Prüfung: Datei unter Storage → `photos` → `<owner_id>` ansehen, dann in `public.photos` `status` auf `approved`/`rejected`), `orphan_photo_files` (Dateien ohne Eintrag, unter Storage löschen)
+- Fotos (#18): privater Storage-Bucket `photos` (`<user-id>/<uuid>.jpg`), Tabelle `public.photos` mit Prüfstatus; die Farb-Platzhalter in `profiles.photos` bleiben als Ersatz. Dateien lassen sich per SQL nicht löschen – nur über die Storage-API (App bzw. `db:seed`)
 - `scripts/db.mjs` – Werkzeug für `db:migrate`, `db:seed`, `db:auth`, `db:query` (Supabase Management-API)
 - `docs/ABNAHMETEST.md` – Checkliste für den Test mit zwei Handys (#12)
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
@@ -60,18 +63,17 @@
 1. **So weit arbeiten, wie es ohne Noah geht** – selbst ausführen (Migrationen, Seeds, Tests, Commits auf `main` + push, Issues schließen) und nach Best Practice entscheiden.
 2. **Entscheidungen, die Noah treffen muss** (neue Abhängigkeiten, Kosten, Rechtliches, Produktfragen, Irreversibles): als **interaktive Auswahl** (AskUserQuestion), **eine Frage nach der anderen**, Empfehlung als erste Option.
 3. **Aufgaben, die Noah selbst erledigen muss** (Konten anlegen, Dashboards, Handys): **nacheinander**, jeweils mit genauen Angaben (wo klicken, was eintragen) – die nächste erst, wenn die vorige erledigt ist.
-4. Zum Testen im Browser: `playwright-core` im Scratchpad (nicht im Projekt) mit dem installierten Chrome (`channel: 'chrome'`), zwei getrennte Browser-Kontexte für zwei Personen; danach `npm run db:seed`.
+4. Zum Testen im Browser: `npm run test:e2e` (zwei getrennte Browser-Kontexte, seedet selbst). Für Einzelprüfungen/Screenshots eigene Skripte im Scratchpad mit `playwright-core` aus `node_modules` und `channel: 'chrome'`; danach `npm run db:seed`.
 
 ## Aktueller Stand (10.11.2026)
 - **Phase 0 und 1** erledigt bis auf #4 (Bestätigungs-Mail – wartet auf Brevo) und #12 (Abnahmetest mit zwei Handys, Checkliste `docs/ABNAHMETEST.md`). App komplett DE/EN (#11).
-- **Phase 2:** erledigt #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #19 Missbrauchsschutz. #17 Passwort vergessen gebaut, Mail-Rundweg wartet auf Brevo. #18 Foto-Upload offen.
-- 35 DB-Tests (`npm run test:db`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher).
+- **Phase 2:** erledigt #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #18 Foto-Upload mit manueller Prüfung, #19 Missbrauchsschutz. #17 Passwort vergessen gebaut, Mail-Rundweg wartet auf Brevo.
+- 40 DB-Tests (`npm run test:db`) und 3 Browser-Tests (`npm run test:e2e`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.
 
 ## Nächste Schritte (beim Start einer neuen Sitzung)
-Zuerst die offenen Entscheidungen **nacheinander** als Auswahl stellen, dann Noahs Aufgaben **nacheinander** geben, parallel alles Übrige selbst erledigen:
-- **Entscheidung 1 – #18 Foto-Prüfung:** manuell durch Noah im Dashboard vor der Freischaltung (Empfehlung für die Beta: kostenlos, rechtlich am sichersten) oder automatischer Prüfdienst (kostet, braucht AV-Vertrag).
-- **Entscheidung 2 – Browser-Tests im Repo:** `playwright-core` als devDependency + `npm run test:e2e` mit dem Zwei-Personen-Ablauf (Empfehlung: ja, ~8 MB, nutzt Chrome).
-- **Aufgabe A – Brevo einrichten** (danach #4 und #17 abschließen): Konto auf brevo.com → Senders: Absender „asap“ mit privater Adresse bestätigen → SMTP & API → SMTP-Schlüssel erzeugen → in `.env`: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SENDER_EMAIL` → dann `npm run db:auth` und Registrierung + Passwort vergessen mit Noahs Adresse testen.
-- **Aufgabe B – #12 Handy-Test** nach `docs/ABNAHMETEST.md` (Variante A geht sofort, B nach Brevo).
-- Danach: #18 umsetzen, dann Phase 3 (Web-Beta: Hosting, eigenes Produktions-Supabase-Projekt, siehe „Für später vermerkt“ in `docs/ROADMAP.md`).
+Getroffene Entscheidungen (10.11.2026): Foto-Prüfung **manuell durch Noah** im Dashboard; Browser-Tests mit `playwright-core` im Repo.
+Zuerst offene Entscheidungen **nacheinander** als Auswahl stellen, dann Noahs Aufgaben **nacheinander** geben, parallel alles Übrige selbst erledigen:
+- **Aufgabe A – Brevo einrichten** (Anleitung am 10.11. gegeben; danach #4 und #17 abschließen): Konto auf brevo.com → Senders: Absender „asap“ mit privater Adresse bestätigen → SMTP & API → SMTP-Schlüssel erzeugen → in `.env`: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SENDER_EMAIL` → dann `npm run db:auth` und Registrierung + Passwort vergessen mit Noahs Adresse testen.
+- **Aufgabe B – #12 Handy-Test** nach `docs/ABNAHMETEST.md` (Variante A geht sofort, inkl. Foto-Upload; B nach Brevo).
+- Danach Phase 3 (Web-Beta: Hosting, eigenes Produktions-Supabase-Projekt, siehe „Für später vermerkt“ in `docs/ROADMAP.md`). Vor der Beta klären: Foto-Pflicht (mind. ein echtes Foto?) und wie Noah über neue Fotos zur Prüfung erfährt.
