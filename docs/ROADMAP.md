@@ -45,7 +45,7 @@ Jeweils: Titel – Ziel. *Fertig, wenn …* · 18+ ist bereits serverseitig erle
 15. **Konto löschen** – im Profil mit Bestätigung; löscht Konto und alle Daten vollständig (DSGVO Art. 17), Meldungen bleiben ohne Personenbezug. *Fertig, wenn nach dem Löschen keine Zeile mit der Nutzer-ID mehr existiert (Test belegt das).*
 16. **Daten herunterladen** – eigene Daten als JSON-Datei (DSGVO Art. 15/20). *Fertig, wenn die Datei Profil, Ideen, Likes, Matches, Nachrichten und Termine enthält.*
 17. **Passwort vergessen** – Link per Mail, danach neues Passwort setzen. *Fertig, wenn der Ablauf mit echter Mail funktioniert (braucht Mailversand, #4).*
-18. **Foto-Upload mit Prüfung** – echte Fotos statt Platzhalter: Supabase Storage (privater Bucket), Verkleinern im Browser, Prüfung vor der Freischaltung. *Fertig, wenn hochgeladene Fotos erst nach der Prüfung für andere sichtbar sind.*
+18. **Foto-Upload mit Prüfung** – echte Fotos statt Platzhalter: Supabase Storage (privater Bucket), Verkleinern im Browser, Prüfung vor der Freischaltung. *Fertig, wenn hochgeladene Fotos erst nach der Prüfung für andere sichtbar sind.* ✔ Prüfung manuell im Dashboard (`moderation.pending_photos`), Tests in `supabase/tests/photos.test.mjs` und `npm run test:e2e`.
 19. **Missbrauchsschutz** – serverseitige Obergrenzen gegen Spam (Likes pro Tag, Nachrichten pro Minute, Meldungen pro Tag). *Fertig, wenn Überschreitungen abgelehnt werden (Test belegt das).*
 
 ## Für später vermerkt

@@ -1,6 +1,6 @@
 import { Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
-import { $, $$, shortCity, toggleIn, bindSubmit, UI, App } from './uiCore.js';
+import { $, $$, shortCity, toggleIn, bindSubmit, UI, PhotoUploads, App } from './uiCore.js';
 import { IdeaForm } from './viewsAuth.js';
 import { t, getLang, setLang, LANGS } from '../i18n/index.js';
 
@@ -32,7 +32,7 @@ const ProfileView = {
     function render() {
       const activeCount = ideas.filter(i => i.active).length;
       body.innerHTML = html`
-        <div class="profile-hero">${UI.photoTile(me.photos[0], me.name)}
+        <div class="profile-hero">${UI.photoTile(me.uploads.find(u => u.status !== 'rejected') || me.photos[0], me.name)}
           <div class="ph-overlay"><div class="ph-name">${me.name}, ${me.age}</div><div class="ph-sub">${icon('pin', 15)} ${me.city}</div></div></div>
         <div class="row-actions"><button type="button" class="btn btn-secondary btn-sm" data-go="#/profile/edit">${icon('edit', 16)} ${t('profile.edit')}</button>
           <button type="button" class="btn btn-secondary btn-sm" data-action="preview">${icon('eye', 16)} ${t('profile.preview')}</button></div>
@@ -174,7 +174,9 @@ const ProfileEditView = {
     const options = [...me.photos, ...PHOTO_PRESETS.filter(p => !me.photos.some(x => key(x) === key(p)))];
     const maxBirth = new Date(); maxBirth.setFullYear(maxBirth.getFullYear() - 18);
     body.innerHTML = html`<form novalidate>
-      <div class="form-section"><h4>${t('userProfile.photos')} <span style="text-transform:none;letter-spacing:0;font-weight:600">${t('profile.photosHint')}</span></h4>
+      <div class="form-section"><h4>${t('photos.title')} <span style="text-transform:none;letter-spacing:0;font-weight:600">${t('photos.hint')}</span></h4>
+        <div class="uploads-slot"></div><p class="hint upload-note">${t('photos.note')}</p></div>
+      <div class="form-section"><h4>${t('photos.placeholderTitle')} <span style="text-transform:none;letter-spacing:0;font-weight:600">${t('profile.photosHint')}</span></h4>
         <div class="field" data-field="photos"><div class="photo-grid">${options.map(p => {
           const i = st.photos.findIndex(x => key(x) === key(p));
           return html`<button type="button" class="photo-option ${i >= 0 ? 'is-on' : ''}" data-photo="${key(p)}" aria-pressed="${i >= 0}">${UI.photoTile(p, st.name)}<span class="sel">${i >= 0 ? i + 1 : ''}</span></button>`;
@@ -196,6 +198,7 @@ const ProfileEditView = {
       </div></form>`;
     const form = $('form', body);
     const saveBtn = $('[data-action="save"]', el);
+    PhotoUploads.mount($('.uploads-slot', form), { user: me, onUser: u => { App.user = u; } });
     saveBtn.disabled = false;
     form.addEventListener('input', e => {
       const n = e.target.name;

@@ -1,7 +1,7 @@
 import { Util, raw, html, icon, logo, CATEGORIES, CAT, BUDGETS, TIMES, DURATIONS, GENDERS, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
 import { t, getLang, setLang } from '../i18n/index.js';
-import { $, $$, shortCity, bindSubmit, toggleIn, UI, App } from './uiCore.js';
+import { $, $$, shortCity, bindSubmit, toggleIn, UI, PhotoUploads, App } from './uiCore.js';
 
 /* =============================================================================
    ANSICHTEN: Login, Registrierung, Onboarding, Ideen-Editor
@@ -323,6 +323,10 @@ const OnboardingView = {
           const options = [...data.photos, ...PHOTO_PRESETS.filter(p => !sel.includes(photoKey(p)))];
           return html`<div class="ob-emoji">📸</div><h2 class="ob-title">${t('onboarding.photosTitle')}</h2>
           <p class="ob-sub">${t('onboarding.photosSub')}</p>
+          <div class="ob-section-label">${t('photos.title')}</div>
+          <div class="uploads-slot"></div><p class="hint upload-note">${t('photos.note')}</p>
+          <div class="ob-section-label">${t('photos.placeholderTitle')}</div>
+          <p class="hint upload-note">${t('onboarding.placeholderSub')}</p>
           <div class="field" data-field="photos"><div class="photo-grid">${options.map(p => {
             const i = sel.indexOf(photoKey(p));
             return html`<button type="button" class="photo-option ${i >= 0 ? 'is-on' : ''}" data-photo="${photoKey(p)}" aria-pressed="${i >= 0}">${UI.photoTile(p, data.name)}<span class="sel">${i >= 0 ? i + 1 : ''}</span></button>`;
@@ -348,6 +352,7 @@ const OnboardingView = {
       body.scrollTop = 0;
       if (step === 'idea') ideaApi = IdeaForm.mount($('.idea-slot', body), { showInspiration: true, onSubmit: () => next() });
       if (step === 'birthdate') updateAge();
+      if (step === 'photos') PhotoUploads.mount($('.uploads-slot', body), { user: App.user, onUser: user => { App.user = user; } });
       const inp = $('input.big-input, textarea', body);
       if (inp && window.matchMedia('(min-width: 521px)').matches) setTimeout(() => inp.focus({ preventScroll: true }), 300);
     }

@@ -30,13 +30,17 @@ function bindSubmit(form, handler) {
 function toggleIn(arr, v) { const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); return arr; }
 
 const UI = {
+  /* Fotos: echte (mit url, signierter Link aus dem DataService) oder Farb-Platzhalter (colors/emoji/pattern) */
   avatar(user, size = 44, cls = '') {
     const ph = user && user.photos && user.photos[0];
-    const colors = ph ? ph.colors : FALLBACK_GRADIENTS[Util.hash(String((user && (user.id || user.name)) || 'x')) % FALLBACK_GRADIENTS.length];
-    return html`<span class="ava ${cls}" style="--s:${size}px;--a:${colors[0]};--b:${colors[1]}" aria-hidden="true">${Util.initials(user && user.name)}</span>`;
+    const colors = ph && ph.colors ? ph.colors : FALLBACK_GRADIENTS[Util.hash(String((user && (user.id || user.name)) || 'x')) % FALLBACK_GRADIENTS.length];
+    return html`<span class="ava ${cls}" style="--s:${size}px;--a:${colors[0]};--b:${colors[1]}" aria-hidden="true">${ph && ph.url ? html`<img src="${ph.url}" alt="" decoding="async">` : Util.initials(user && user.name)}</span>`;
   },
   photoTile(ph, name, cls = '') {
-    const colors = ph ? ph.colors : ['#FFB547', '#FF5A3C'];
+    if (ph && ph.url) {
+      return html`<div class="photo has-img ${cls}"><img src="${ph.url}" alt="${t('photos.alt', { name })}" decoding="async">${ph.status === 'pending' ? html`<span class="ph-badge">${t('photos.pending')}</span>` : ''}</div>`;
+    }
+    const colors = ph && ph.colors ? ph.colors : ['#FFB547', '#FF5A3C'];
     const hasEmoji = ph && ph.emoji;
     return html`<div class="photo pat-${(ph && ph.pattern) || 0} ${hasEmoji ? '' : 'init-only'} ${cls}" style="--a:${colors[0]};--b:${colors[1]}">${hasEmoji ? html`<span class="ph-emoji">${ph.emoji}</span>` : ''}<span class="ph-init">${Util.initials(name)}</span></div>`;
   },
@@ -219,6 +223,57 @@ const UI = {
     if (root && err && err.fields) { UI.fieldErrors(root, err.fields); return; }
     if (root) { UI.alert(root, (err && err.message) || t('common.unknownError')); return; }
     UI.toast({ icon: '⚠️', title: t('common.failedTitle'), text: (err && err.message) || t('common.tryAgain') });
+  },
+};
+
+/* ---------- Echte Fotos hochladen und löschen (Profil bearbeiten, Onboarding) ----------
+   Änderungen gelten sofort (nicht erst mit „Speichern“). onUser bekommt das aktualisierte eigene Profil. */
+const PhotoUploads = {
+  mount(el, { user, onUser = () => {} }) {
+    const PILL = { pending: 'gray', approved: 'green', rejected: 'danger' };
+    let uploads = user.uploads || [];
+    let busy = false;
+    function render() {
+      el.innerHTML = html`<div class="photo-grid uploads">
+        ${uploads.map(u => html`<div class="upload-item" data-upload="${u.id}">${UI.photoTile({ url: u.url }, user.name)}
+          <span class="pill ${PILL[u.status]}">${t('photos.' + u.status)}</span>
+          <button type="button" class="upload-del" data-del="${u.id}" aria-label="${t('photos.delete')}">${icon('trash', 16)}</button></div>`)}
+        ${uploads.length < 3 ? html`<label class="upload-add ${busy ? 'is-busy' : ''}">
+          <input type="file" accept="image/*" class="sr-only" data-file ${busy ? raw('disabled') : ''}>
+          ${busy ? html`<span class="spinner" role="status"></span><span>${t('photos.uploading')}</span>` : html`${icon('plus', 24)}<span>${t('photos.add')}</span>`}</label>` : ''}
+      </div>
+      ${uploads.some(u => u.status === 'rejected') ? html`<p class="hint upload-note">${t('photos.rejectedHint')}</p>` : ''}`;
+    }
+    function done(u) { uploads = u.uploads; onUser(u); }
+    function fail(err) {
+      // Validierungsfehler (Format, Größe) direkt als Text zeigen
+      if (err && err.fields) UI.toast({ icon: '⚠️', title: t('common.failedTitle'), text: Object.values(err.fields)[0] });
+      else UI.handleError(err);
+    }
+    el.addEventListener('change', async e => {
+      const input = e.target.closest('[data-file]');
+      if (!input || !input.files[0] || busy) return;
+      const file = input.files[0];
+      busy = true; render();
+      try {
+        done(await DataService.uploadPhoto(file));
+        UI.toast({ icon: '📸', title: t('photos.uploaded'), text: t('photos.uploadedText'), light: true, duration: 3600 });
+      } catch (err) { fail(err); }
+      busy = false; render();
+    });
+    el.addEventListener('click', async e => {
+      const del = e.target.closest('[data-del]');
+      if (!del || busy || UI.isBusy(del)) return;
+      const ok = await UI.confirm({ icon: '🗑️', title: t('photos.deleteTitle'), text: t('photos.deleteText'), confirmLabel: t('profile.delete'), danger: true });
+      if (!ok) return;
+      UI.busy(del, true);
+      try {
+        done(await DataService.deletePhoto(del.dataset.del));
+        UI.toast({ icon: '🗑️', title: t('photos.deleted'), light: true, duration: 2000 });
+        render();
+      } catch (err) { UI.busy(del, false); fail(err); }
+    });
+    render();
   },
 };
 
@@ -627,4 +682,4 @@ const App = {
   },
 };
 
-export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, LikeSheet, SafetyMenu, MatchOverlay, TABS, makeCtx, App };
+export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, PhotoUploads, LikeSheet, SafetyMenu, MatchOverlay, TABS, makeCtx, App };

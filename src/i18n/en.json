@@ -120,7 +120,10 @@
     "LIKE_LIMIT": "You've liked a lot of ideas today. Come back tomorrow!",
     "MESSAGE_LIMIT": "You're writing very fast – please wait a moment.",
     "IDEA_DAILY_LIMIT": "You've created a lot of ideas today. You can publish more tomorrow.",
-    "PROPOSAL_LIMIT": "You already have three open date proposals – wait for a reply."
+    "PROPOSAL_LIMIT": "You already have three open date proposals – wait for a reply.",
+    "PHOTO_LIMIT": "You can upload up to 3 photos. Delete one first.",
+    "PHOTO_TOO_LARGE": "This photo is too large. Please choose another one.",
+    "PHOTO_UPLOAD": "The photo could not be uploaded. Please try again."
   },
   "validation": {
     "email": "Please enter a valid email address.",
@@ -165,7 +168,9 @@
     },
     "passwordMissing": "Please enter your password.",
     "passwordRepeat": "Please repeat your password.",
-    "samePassword": "The new password must differ from the old one."
+    "samePassword": "The new password must differ from the old one.",
+    "photoType": "This image format is not supported. Please choose a JPG or PNG photo.",
+    "photoSmall": "This photo is too small (at least 200 pixels)."
   },
   "chat": {
     "proposalPreview": {
@@ -525,7 +530,7 @@
     "interestsTitle": "What do you like?",
     "interestsSub": "Pick 3 to 10 interests – shared ones are highlighted for others.",
     "photosTitle": "Your profile pictures",
-    "photosSub": "For now we use colourful placeholders instead of real photos. Pick 1 to 3 – the first one is your main picture.",
+    "photosSub": "Upload up to 3 real photos – we review them briefly before others can see them.",
     "ideaTitle": "Your first date idea",
     "ideaSub": "What would you like to do with someone? Once your idea is live, your feed unlocks.",
     "publish": "Publish idea & get started",
@@ -536,7 +541,8 @@
     "maxPhotos": "At most 3 pictures",
     "maxPhotosText": "Tap a selected picture to remove it.",
     "unlockedTitle": "Your feed is unlocked!",
-    "unlockedText": "Take a look at the ideas waiting for you."
+    "unlockedText": "Take a look at the ideas waiting for you.",
+    "placeholderSub": "Until a photo is approved, others see your placeholder. Pick 1 to 3 – the first one is your main picture."
   },
   "requests": {
     "filterAria": "Filter requests",
@@ -673,5 +679,24 @@
     "save": "Save password",
     "saved": "Your password has been changed",
     "recoveryToast": "Now set your new password"
+  },
+  "photos": {
+    "title": "Real photos",
+    "hint": "(up to 3, reviewed before they go live)",
+    "note": "We shrink photos before uploading and remove location and camera data.",
+    "placeholderTitle": "Placeholder",
+    "add": "Add photo",
+    "uploading": "Uploading …",
+    "pending": "In review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "rejectedHint": "A photo was rejected – e.g. because you are hard to recognise or it breaks our rules. Delete it and upload another one.",
+    "delete": "Delete photo",
+    "deleteTitle": "Delete photo?",
+    "deleteText": "The photo will be removed permanently.",
+    "deleted": "Photo deleted",
+    "uploaded": "Photo uploaded",
+    "uploadedText": "We will review it shortly. Until then, others see your placeholder.",
+    "alt": "Photo of {name}"
   }
 }

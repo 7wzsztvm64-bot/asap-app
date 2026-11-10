@@ -19,6 +19,9 @@ import { validationError, distanceKm, validateCredentials, validateIdea, validat
    ============================================================================= */
 const DataService = (() => {
   const HOUR = 3600000;
+  const PHOTO_BUCKET = 'photos';
+  const PHOTO_MAX_PX = 1280;       // längste Seite nach dem Verkleinern
+  const PHOTO_URL_TTL = 1800;      // signierte Foto-Links gelten 30 Min. (Sekunden)
   const TYPING_MS = 4000;          // so lange bleibt „schreibt …“ ohne neues Signal sichtbar
   const TYPING_THROTTLE_MS = 2500; // höchstens so oft „schreibt …“ senden
 
@@ -28,6 +31,7 @@ const DataService = (() => {
   const lastTypingSent = {};
   const matchChannels = new Map(); // matchId -> Realtime-Kanal für „schreibt …“
   const names = new Map();         // userId -> Name (für Toasts bei Realtime-Events)
+  const photoUrls = new Map();     // Storage-Pfad -> { url, until } (signierte Links wiederverwenden → Browser-Cache greift)
   let pending = 0;
   let ready = null;
   let dbChannel = null;
@@ -68,6 +72,12 @@ const DataService = (() => {
       }
       return err;
     }
+    // Storage (Foto-Upload): 413 = zu groß, 403 = Policy (z. B. schon 3 Dateien)
+    if (e && e.name === 'StorageApiError') {
+      const status = String(e.statusCode || e.status || '');
+      return apiError(status === '413' ? 'PHOTO_TOO_LARGE' : status === '403' ? 'PHOTO_LIMIT' : 'PHOTO_UPLOAD');
+    }
+    if (e && e.name === 'StorageUnknownError') return apiError('NETWORK');
     if (e && e.code === 'email_address_invalid') return validationError({ email: t('validation.email') });
     if (e && AUTH_CODES[e.code]) return apiError(AUTH_CODES[e.code]);
     if (e && (e.code === 'PGRST301' || e.code === 'PGRST303')) return apiError('UNAUTHORIZED'); // JWT abgelaufen/ungültig
@@ -133,19 +143,64 @@ const DataService = (() => {
       createdAt: ms(r.created_at), message: r.message, respondedAt: ms(r.responded_at) };
   }
 
+  /* ---------- Fotos (Supabase Storage, privater Bucket) ---------- */
+  /** Hängt an echte Fotos (mit path) einen signierten Link (url). Platzhalter bleiben unverändert. */
+  async function attachPhotoUrls(photoLists) {
+    const photos = photoLists.flat().filter(ph => ph && ph.path);
+    if (!photos.length) return;
+    const now = Date.now();
+    const missing = [...new Set(photos.filter(ph => !(photoUrls.get(ph.path) && photoUrls.get(ph.path).until > now)).map(ph => ph.path))];
+    if (missing.length) {
+      const { data, error } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(missing, PHOTO_URL_TTL);
+      if (error) console.warn('[DataService] Foto-Links:', error); // ohne Link zeigt die UI den Farbverlauf
+      (data || []).forEach(d => {
+        if (d.signedUrl) photoUrls.set(d.path, { url: d.signedUrl, until: now + (PHOTO_URL_TTL - 300) * 1000 });
+      });
+    }
+    photos.forEach(ph => { const c = photoUrls.get(ph.path); if (c) ph.url = c.url; });
+  }
+  /** Bild verkleinern und als JPEG neu kodieren – dabei fallen EXIF-Daten (u. a. GPS-Ort) weg. */
+  async function toJpeg(file) {
+    if (!file || !/^image\//.test(file.type || 'image/')) throw validationError({ photo: t('validation.photoType') });
+    let bitmap;
+    try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+    catch { throw validationError({ photo: t('validation.photoType') }); } // z. B. HEIC in Chrome
+    if (Math.min(bitmap.width, bitmap.height) < 200) { bitmap.close(); throw validationError({ photo: t('validation.photoSmall') }); }
+    const scale = Math.min(1, PHOTO_MAX_PX / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+    if (!blob) throw apiError('PHOTO_UPLOAD');
+    return blob;
+  }
+  /** UUID v4 – crypto.randomUUID gibt es nur in sicheren Kontexten (nicht bei npm run dev:lan über http). */
+  function uuid() {
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
+
   /* ---------- Laden ---------- */
   /** Eigenes Profil inkl. privater Felder (Geburtsdatum, „Interessiert an“). */
   async function loadMe(id) {
-    const [{ data: { session } }, row, ideas] = await Promise.all([
+    const [{ data: { session } }, row, ideas, uploads] = await Promise.all([
       supabase.auth.getSession(),
       supabase.from('profiles').select('*').eq('id', id).single().then(unwrap),
       supabase.from('ideas').select('active, deleted_at').eq('owner_id', id).then(unwrap),
+      supabase.from('photos').select('id, path, position, status, created_at').eq('owner_id', id).order('position').then(unwrap),
     ]);
     const email = session ? session.user.email : '';
     const live = ideas.filter(i => !i.deleted_at);
+    const photoUploads = uploads.map(u => ({ id: u.id, path: u.path, position: u.position, status: u.status, createdAt: ms(u.created_at) }));
+    await attachPhotoUrls([photoUploads]);
     return {
       id: row.id, email, name: row.name, birthdate: row.birthdate, gender: row.gender, interestedIn: row.interested_in,
-      city: row.city, bio: row.bio, photos: row.photos, interests: row.interests, createdAt: ms(row.created_at),
+      // photos = Farb-Platzhalter (Ersatz), uploads = echte Fotos mit Prüfstatus (pending/approved/rejected)
+      city: row.city, bio: row.bio, photos: row.photos, uploads: photoUploads, interests: row.interests, createdAt: ms(row.created_at),
       profileComplete: row.profile_complete, onboardingStep: row.onboarding_step,
       // Das Onboarding endet mit der ersten eigenen Idee
       firstIdeaCreated: ideas.length > 0,
@@ -158,6 +213,7 @@ const DataService = (() => {
     if (!unique.length) return new Map();
     const rows = await rpc('get_public_profiles', { ids: unique });
     rows.forEach(r => names.set(r.id, r.name));
+    await attachPhotoUrls(rows.map(r => r.photos || []));
     return new Map(rows.map(r => [r.id, r]));
   }
   async function ideasByIds(ids) {
@@ -278,8 +334,10 @@ const DataService = (() => {
     }, 0);
   }
   async function signedIn(session) {
+    // Sofort merken: sonst hält der Auth-Listener die eigene Anmeldung für einen Wechsel in einem
+    // anderen Tab und die App springt ein zweites Mal zur Startseite
+    knownUserId = session.user.id;
     const user = await loadMe(session.user.id);
-    knownUserId = user.id;
     await startRealtime(user.id);
     emit('session', { userId: user.id, user });
     return user;
@@ -381,6 +439,42 @@ const DataService = (() => {
         return user;
       });
     },
+    /** Echtes Foto hochladen (wird verkleinert). Es bleibt für andere unsichtbar, bis die Moderation es freigibt. */
+    uploadPhoto(file) {
+      return request('photos.upload', async () => {
+        const id = await myId();
+        const existing = unwrap(await supabase.from('photos').select('position').eq('owner_id', id));
+        if (existing.length >= 3) throw apiError('PHOTO_LIMIT');
+        const blob = await toJpeg(file);
+        const path = `${id}/${uuid()}.jpg`;
+        const { error: uploadError } = await supabase.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadError) throw uploadError;
+        const position = [0, 1, 2].find(p => !existing.some(e => e.position === p));
+        const { error } = await supabase.from('photos').insert({ owner_id: id, path, position });
+        if (error) {
+          await supabase.storage.from(PHOTO_BUCKET).remove([path]).catch(() => {}); // Datei nicht verwaist liegen lassen
+          throw error;
+        }
+        const user = await loadMe(id);
+        changed('profile');
+        return user;
+      });
+    },
+    /** Echtes Foto löschen: erst die Datei (geht nur über die Storage-API), dann den Eintrag. */
+    deletePhoto(photoId) {
+      return request('photos.delete', async () => {
+        const id = await myId();
+        const row = unwrap(await supabase.from('photos').select('path').eq('id', photoId).eq('owner_id', id).maybeSingle());
+        if (!row) throw apiError('NOT_FOUND');
+        const { error } = await supabase.storage.from(PHOTO_BUCKET).remove([row.path]);
+        if (error) throw error;
+        unwrap(await supabase.from('photos').delete().eq('id', photoId));
+        photoUrls.delete(row.path);
+        const user = await loadMe(id);
+        changed('profile');
+        return user;
+      });
+    },
     completeOnboarding() {
       return request('rpc.complete_onboarding', async () => {
         await rpc('complete_onboarding');
@@ -396,6 +490,7 @@ const DataService = (() => {
         const id = await myId();
         const [active, rows, cs] = await Promise.all([hasActiveIdea(id), rpc('get_feed'), cards([id])]);
         if (!active) return { locked: true, items: [], totalBeforeFilter: 0 };
+        await attachPhotoUrls(rows.map(r => r.owner.photos || []));
         const me = cs.get(id);
         const items = rows.map(r => {
           const owner = mapPublic(r.owner, me);
@@ -441,6 +536,7 @@ const DataService = (() => {
       return request('rpc.get_sent_likes', async () => {
         const id = await myId();
         const [rows, cs] = await Promise.all([rpc('get_sent_likes'), cards([id])]);
+        await attachPhotoUrls(rows.map(r => (r.owner && r.owner.photos) || []));
         const me = cs.get(id);
         return rows.filter(r => r.owner).map(r => ({
           id: r.like_id, createdAt: ms(r.created_at), message: r.message, status: r.status, matchId: r.match_id,
@@ -708,7 +804,20 @@ const DataService = (() => {
     /* ----- Konto & Datenschutz (DSGVO) ----- */
     /** Eigene Daten als Objekt (für den Download als JSON-Datei). */
     exportMyData() {
-      return request('rpc.export_my_data', () => rpc('export_my_data'));
+      return request('rpc.export_my_data', async () => {
+        const [data, photos] = await Promise.all([rpc('export_my_data'), rpc('export_my_photos')]);
+        // Fotos als Links zum Herunterladen (24 Std. gültig)
+        if (photos.length) {
+          const { data: signed, error } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(photos.map(p => p.path), 86400);
+          if (error) throw error;
+          const until = new Date(Date.now() + 86400000).toISOString();
+          photos.forEach(p => {
+            const s = signed.find(x => x.path === p.path);
+            if (s && s.signedUrl) Object.assign(p, { downloadUrl: s.signedUrl, downloadUrlValidUntil: until });
+          });
+        }
+        return { ...data, photos };
+      });
     },
     /** Konto und alle Daten endgültig löschen. Das Passwort wird vorher erneut geprüft. */
     deleteAccount(password) {
@@ -721,6 +830,14 @@ const DataService = (() => {
         if (error) {
           if (error.code === 'invalid_credentials') throw validationError({ password: t('errors.INVALID_CREDENTIALS') });
           throw error;
+        }
+        // Fotos zuerst: Dateien lassen sich nur über die Storage-API löschen, nicht von der Datenbank aus
+        const uid = data.session.user.id;
+        const { data: files, error: listError } = await supabase.storage.from(PHOTO_BUCKET).list(uid, { limit: 100 });
+        if (listError) throw listError;
+        if (files.length) {
+          const { error: removeError } = await supabase.storage.from(PHOTO_BUCKET).remove(files.map(f => `${uid}/${f.name}`));
+          if (removeError) throw removeError;
         }
         await rpc('delete_my_account');
         knownUserId = null;

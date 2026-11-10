@@ -4,7 +4,7 @@
    nie committen, nie mit VITE_-Präfix (sonst landet er im Frontend-Build).
 
      npm run db:migrate              – alle noch fehlenden Dateien aus supabase/migrations/ einspielen
-     npm run db:query -- "select 1"  – einzelne SQL-Abfrage, Ergebnis als Tabelle
+     npm run db:query -- "select 1"  – einzelne SQL-Abfrage, Ergebnis als Tabelle (mit --json als JSON)
      npm run db:seed                 – Testpersonen (@datedate.app, Passwort Test1234) neu anlegen
      npm run db:auth                 – Auth-Einstellungen aus supabase/auth/ (+ SMTP aus .env) übernehmen
 
@@ -64,11 +64,32 @@ async function migrate() {
   }
 }
 
+/* Foto-Dateien der Testkonten löschen. Per SQL lässt Supabase das nicht zu (siehe Migration photos.sql),
+   daher über die Storage-API mit dem Secret-Key – der wird nur für diesen Aufruf über die
+   Management-API geholt und nirgends gespeichert. */
+async function removeSeedPhotos() {
+  const files = (await query(`select o.name from storage.objects o join auth.users u on (storage.foldername(o.name))[1] = u.id::text
+    where o.bucket_id = 'photos' and u.email like '%@datedate.app'`)).map(r => r.name);
+  if (!files.length) return;
+  const keys = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/api-keys?reveal=true`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!keys.ok) throw new Error(`API-Keys: HTTP ${keys.status}`);
+  const secret = (await keys.json()).find(k => k.type === 'secret')?.api_key;
+  if (!secret) throw new Error('Kein Secret-Key im Projekt gefunden (Dashboard → Settings → API Keys).');
+  const res = await fetch(`${process.env.VITE_SUPABASE_URL}/storage/v1/object/photos`, {
+    method: 'DELETE',
+    headers: { apikey: secret, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prefixes: files }),
+  });
+  if (!res.ok) throw new Error(`Foto-Dateien löschen: HTTP ${res.status} ${await res.text()}`);
+  console.log(`✔ ${files.length} Foto-Datei(en) der Testkonten gelöscht`);
+}
+
 /* Testdaten aus src/js/seed.js (dieselben wie im Mock-Backend) als SQL einspielen.
    Löscht vorher alle Konten mit @datedate.app – inkl. allem, was daran hängt. Nur für Testprojekte! */
 async function seed() {
   const { buildSeedDB, seedUuid, TEST_PASSWORD } = await import('../src/js/seed.js');
   const data = await buildSeedDB();
+  await removeSeedPhotos();
   const U = id => `'${seedUuid(id)}'::uuid`;
   const lit = v => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
   const ts = ms => (ms == null ? 'null' : `to_timestamp(${ms / 1000})`);
@@ -146,7 +167,10 @@ try {
   if (command === 'migrate') await migrate();
   else if (command === 'seed') await seed();
   else if (command === 'auth') await applyAuthConfig();
-  else if (command === 'query' && sql) console.table(await query(sql));
+  else if (command === 'query' && sql) {
+    const rows = await query(sql);
+    if (process.argv.includes('--json')) console.log(JSON.stringify(rows)); else console.table(rows);
+  }
   else { console.error('Aufruf: npm run db:migrate  |  npm run db:seed  |  npm run db:auth  |  npm run db:query -- "SQL"'); process.exit(1); }
 } catch (e) {
   console.error('✖', e.message);

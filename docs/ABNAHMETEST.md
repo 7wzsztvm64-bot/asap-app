@@ -26,6 +26,9 @@ Ziel: Registrieren → Idee → Like → Match → Chat → Termin läuft auf zw
 | Termin | Kalender-Symbol → Termin vorschlagen | Vorschlag erscheint im Chat → Bestätigen | ☐ |
 | Termin | Hinweis „Mia hat zugesagt!“ | | ☐ |
 | Dates | Date steht unter „Dates“ | Date steht unter „Dates“ | ☐ |
+| Foto | Profil → Bearbeiten → „Foto hinzufügen“ → Foto aus der Mediathek oder Kamera | | ☐ |
+| Foto | Foto zeigt „In Prüfung“, auch als Profilbild | Jonas' Profil zeigt noch den Platzhalter | ☐ |
+| Foto | (Mac: Dashboard → `public.photos` → `status` auf `approved`) | Jonas' Profil neu öffnen → echtes Foto | ☐ |
 | Abmelden | Profil → Abmelden → wieder einloggen, alles noch da | | ☐ |
 
 ## Variante B – mit Registrierung (sobald der Mailversand eingerichtet ist)

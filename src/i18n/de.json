@@ -120,7 +120,10 @@
     "LIKE_LIMIT": "Du hast heute schon sehr viele Ideen gelikt. Morgen geht’s weiter!",
     "MESSAGE_LIMIT": "Du schreibst gerade sehr schnell – warte bitte einen Moment.",
     "IDEA_DAILY_LIMIT": "Du hast heute schon viele Ideen angelegt. Morgen kannst du weitere veröffentlichen.",
-    "PROPOSAL_LIMIT": "Du hast schon drei offene Terminvorschläge – warte auf eine Antwort."
+    "PROPOSAL_LIMIT": "Du hast schon drei offene Terminvorschläge – warte auf eine Antwort.",
+    "PHOTO_LIMIT": "Du kannst höchstens 3 Fotos hochladen. Lösch zuerst eins.",
+    "PHOTO_TOO_LARGE": "Das Foto ist zu groß. Bitte wähle ein anderes.",
+    "PHOTO_UPLOAD": "Das Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal."
   },
   "validation": {
     "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -165,7 +168,9 @@
     },
     "passwordMissing": "Bitte gib dein Passwort ein.",
     "passwordRepeat": "Bitte wiederhole dein Passwort.",
-    "samePassword": "Das neue Passwort muss sich vom alten unterscheiden."
+    "samePassword": "Das neue Passwort muss sich vom alten unterscheiden.",
+    "photoType": "Dieses Bildformat wird nicht unterstützt. Bitte wähle ein JPG- oder PNG-Foto.",
+    "photoSmall": "Das Foto ist zu klein (mindestens 200 Pixel)."
   },
   "chat": {
     "proposalPreview": {
@@ -525,7 +530,7 @@
     "interestsTitle": "Was magst du?",
     "interestsSub": "Wähle 3 bis 10 Interessen – gemeinsame zeigen wir anderen hervorgehoben.",
     "photosTitle": "Deine Profilbilder",
-    "photosSub": "Im Prototyp nutzen wir farbige Platzhalter statt echter Fotos. Wähle 1 bis 3 – das erste ist dein Hauptbild.",
+    "photosSub": "Lade bis zu 3 echte Fotos hoch – wir prüfen sie kurz, bevor andere sie sehen.",
     "ideaTitle": "Deine erste Date-Idee",
     "ideaSub": "Was würdest du gern mit jemandem unternehmen? Sobald deine Idee steht, wird dein Feed freigeschaltet.",
     "publish": "Idee veröffentlichen & loslegen",
@@ -536,7 +541,8 @@
     "maxPhotos": "Maximal 3 Bilder",
     "maxPhotosText": "Tippe ein ausgewähltes Bild an, um es zu entfernen.",
     "unlockedTitle": "Dein Feed ist freigeschaltet!",
-    "unlockedText": "Schau gleich mal, welche Ideen auf dich warten."
+    "unlockedText": "Schau gleich mal, welche Ideen auf dich warten.",
+    "placeholderSub": "Solange noch kein Foto freigegeben ist, sehen andere deinen Platzhalter. Wähle 1 bis 3 – der erste ist dein Hauptbild."
   },
   "requests": {
     "filterAria": "Anfragen filtern",
@@ -673,5 +679,24 @@
     "save": "Passwort speichern",
     "saved": "Dein Passwort wurde geändert",
     "recoveryToast": "Setz jetzt dein neues Passwort"
+  },
+  "photos": {
+    "title": "Echte Fotos",
+    "hint": "(bis zu 3, werden vor der Freischaltung geprüft)",
+    "note": "Wir verkleinern Fotos vor dem Hochladen und entfernen dabei Standort- und Kameradaten.",
+    "placeholderTitle": "Platzhalter",
+    "add": "Foto hinzufügen",
+    "uploading": "Lädt hoch …",
+    "pending": "In Prüfung",
+    "approved": "Freigegeben",
+    "rejected": "Abgelehnt",
+    "rejectedHint": "Ein Foto wurde abgelehnt – z. B. weil du nicht gut zu erkennen bist oder es gegen unsere Regeln verstößt. Lösch es und lade ein anderes hoch.",
+    "delete": "Foto löschen",
+    "deleteTitle": "Foto löschen?",
+    "deleteText": "Das Foto wird endgültig entfernt.",
+    "deleted": "Foto gelöscht",
+    "uploaded": "Foto hochgeladen",
+    "uploadedText": "Wir prüfen es kurz. Bis zur Freigabe sehen andere deinen Platzhalter.",
+    "alt": "Foto von {name}"
   }
 }

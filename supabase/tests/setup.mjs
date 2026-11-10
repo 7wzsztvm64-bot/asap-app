@@ -30,6 +30,29 @@ const SUPABASE_ENV = `
   grant usage on schema realtime to authenticated;
   grant select, insert on realtime.messages to authenticated;
   grant usage on sequence realtime.messages_id_seq to authenticated;
+  -- Storage: Buckets, Datei-Einträge und die Pfad-Hilfsfunktionen (wie bei Supabase)
+  create schema storage;
+  create table storage.buckets (id text primary key, name text not null, public boolean default false,
+    file_size_limit bigint, allowed_mime_types text[], created_at timestamptz default now());
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets (id),
+    name text, owner uuid, created_at timestamptz default now(), unique (bucket_id, name));
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language plpgsql as $$
+    declare _parts text[];
+    begin
+      select string_to_array(name, '/') into _parts;
+      return _parts[1 : array_length(_parts, 1) - 1];
+    end
+  $$;
+  create function storage.extension(name text) returns text language plpgsql as $$
+    declare _parts text[];
+    begin
+      select string_to_array(name, '/') into _parts;
+      return reverse(split_part(reverse(_parts[array_length(_parts, 1)]), '.', 1));
+    end
+  $$;
+  grant usage on schema storage to anon, authenticated, service_role;
+  grant select, insert, update, delete on storage.objects to authenticated;
 `;
 
 export async function createTestDb() {

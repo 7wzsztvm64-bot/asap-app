@@ -332,6 +332,20 @@ img,svg{display:block}
 .photo-option .sel{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid #fff;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;z-index:2;transition:all .2s}
 .photo-option.is-on .sel{background:var(--primary);border-color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .photo-option.is-on .photo{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--primary)}
+.photo.has-img{background:var(--surface-2)}
+.photo.has-img img,.ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.photo .ph-badge{position:absolute;left:10px;top:10px;z-index:2;padding:4px 10px;border-radius:999px;background:rgba(30,15,20,.6);color:#fff;font-size:12px;font-weight:750;backdrop-filter:blur(6px)}
+/* Echte Fotos hochladen (Profil bearbeiten, Onboarding) */
+.upload-item,.upload-add{position:relative;aspect-ratio:3/4;border-radius:18px}
+.upload-item .photo{width:100%;height:100%;border-radius:18px}
+.upload-item .pill{position:absolute;left:7px;bottom:7px;z-index:2;height:22px;padding:0 8px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.upload-del{position:absolute;top:7px;right:7px;z-index:2;width:32px;height:32px;border-radius:50%;background:rgba(30,15,20,.55);color:#fff;display:grid;place-items:center}
+.upload-del.is-loading{opacity:.5;pointer-events:none}
+.upload-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;border:2px dashed var(--line-2);color:var(--ink-2);font-size:13px;font-weight:700;text-align:center;cursor:pointer;transition:border-color .2s,color .2s}
+.upload-add:hover,.upload-add:focus-within{border-color:var(--primary);color:var(--primary-600)}
+.upload-add.is-busy{cursor:progress}
+.upload-add .spinner{width:24px;height:24px}
+.upload-note{margin:8px 0 0}
 
 /* ---------- Idee-Karte (Hauptelement) ---------- */
 .feed-head{padding-right:10px}
