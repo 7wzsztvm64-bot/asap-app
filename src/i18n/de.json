@@ -596,5 +596,25 @@
     "saved": "Idee gespeichert",
     "published": "Idee veröffentlicht!",
     "publishedText": "Sie erscheint jetzt im Feed anderer."
+  },
+  "safety": {
+    "subtitle": "Sicherheit",
+    "menuAria": "Weitere Optionen",
+    "block": "{name} blockieren",
+    "blockHint": "Ihr seht euch danach gegenseitig nicht mehr – auch nicht im Chat. Die Person wird nicht benachrichtigt.",
+    "blockTitle": "{name} blockieren?",
+    "blockText": "Profil, Ideen und euer Chat verschwinden für euch beide. Du kannst das im Profil unter „Blockierte Personen“ wieder aufheben.",
+    "blockConfirm": "Blockieren",
+    "blocked": "{name} ist blockiert"
+  },
+  "blocked": {
+    "title": "Blockierte Personen",
+    "info": "Blockierte Personen sehen dein Profil und deine Ideen nicht – und du ihre nicht. Sie wissen nicht, dass du sie blockiert hast.",
+    "unblock": "Aufheben",
+    "noneTitle": "Niemand blockiert",
+    "noneText": "Wenn dich jemand stört, kannst du die Person im Profil oder Chat über ⋯ blockieren.",
+    "unblockTitle": "Blockierung von {name} aufheben?",
+    "unblockText": "Ihr seht euch danach wieder – auch ein früherer Chat taucht wieder auf.",
+    "unblocked": "{name} ist nicht mehr blockiert"
   }
 }

@@ -1,7 +1,7 @@
 import { Util, escapeHtml, raw, html, Fmt, icon, logo, CATEGORIES, CAT, BUDGETS, TIMES, TIME, Label } from './core.js';
 import { DataService } from './dataService.js';
 import { t } from '../i18n/index.js';
-import { $, $$, shortCity, toggleIn, UI, LikeSheet, MatchOverlay, App } from './uiCore.js';
+import { $, $$, shortCity, toggleIn, UI, LikeSheet, SafetyMenu, MatchOverlay, App } from './uiCore.js';
 
 /* =============================================================================
    ANSICHTEN: Entdecken (Feed mit Swipe), Anfragen, Profil anderer Personen
@@ -361,7 +361,7 @@ const UserProfileView = {
   async render(el, params, ctx) {
     const userId = params[0];
     el.innerHTML = html`<header class="topbar bordered"><button type="button" class="icon-btn back" data-action="back" aria-label="${t('common.back')}">${icon('back')}</button>
-      <div class="topbar-title sm">${t('tabs.profile')}</div></header><div class="scroll"><div class="pad body">${UI.loading()}</div></div>`;
+      <div class="topbar-title sm">${t('tabs.profile')}</div><div class="actions"><button type="button" class="icon-btn" data-action="safety" aria-label="${t('safety.menuAria')}" hidden>${icon('more')}</button></div></header><div class="scroll"><div class="pad body">${UI.loading()}</div></div>`;
     const body = $('.body', el);
     let data = null;
 
@@ -375,6 +375,7 @@ const UserProfileView = {
     function render() {
       const u = data.user;
       $('.topbar-title', el).textContent = data.isMe ? t('userProfile.howOthersSeeYou') : u.name;
+      $('[data-action="safety"]', el).hidden = data.isMe;
       const photos = u.photos.length ? u.photos : [null];
       body.innerHTML = html`
         <div class="gallery" aria-label="${t('userProfile.photos')}">${photos.map(p => UI.photoTile(p, u.name))}</div>
@@ -416,6 +417,7 @@ const UserProfileView = {
       if (!btn || UI.isBusy(btn)) return;
       const a = btn.dataset.action;
       if (a === 'retry') { body.innerHTML = UI.loading(); return load(); }
+      if (a === 'safety') return SafetyMenu.open({ user: data.user, context: { matchId: data.matchId }, fallback: '#/feed' });
       if (a === 'like') {
         const entry = data.ideas.find(x => x.idea.id === btn.dataset.idea);
         if (!entry) return;

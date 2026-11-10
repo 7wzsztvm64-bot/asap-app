@@ -596,5 +596,25 @@
     "saved": "Idea saved",
     "published": "Idea published!",
     "publishedText": "It now appears in other people's feeds."
+  },
+  "safety": {
+    "subtitle": "Safety",
+    "menuAria": "More options",
+    "block": "Block {name}",
+    "blockHint": "You won't see each other anymore – not even in the chat. The person won't be notified.",
+    "blockTitle": "Block {name}?",
+    "blockText": "Profile, ideas and your chat disappear for both of you. You can undo this in your profile under “Blocked people”.",
+    "blockConfirm": "Block",
+    "blocked": "{name} is blocked"
+  },
+  "blocked": {
+    "title": "Blocked people",
+    "info": "Blocked people can't see your profile or ideas – and you can't see theirs. They don't know you blocked them.",
+    "unblock": "Unblock",
+    "noneTitle": "Nobody blocked",
+    "noneText": "If someone bothers you, you can block them via ⋯ in their profile or chat.",
+    "unblockTitle": "Unblock {name}?",
+    "unblockText": "You'll see each other again – an earlier chat will reappear too.",
+    "unblocked": "{name} is no longer blocked"
   }
 }

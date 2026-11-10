@@ -44,6 +44,7 @@ const ProfileView = {
         <div class="section-title">${t('profile.account')}</div>
         <div class="settings-list">
           <div class="si">${icon('mail', 20)}<span class="grow">${t('auth.email')}</span><span class="val">${me.email}</span></div>
+          <button type="button" class="si" data-go="#/profile/blocked">${icon('ban', 20)}<span class="grow">${t('blocked.title')}</span>${icon('chevronRight', 18)}</button>
           <div class="si">🌐<span class="grow">${t('lang.label')}</span><span class="seg" style="flex:none">${LANGS.map(l => html`<button type="button" class="${l === getLang() ? 'is-on' : ''}" data-lang="${l}" aria-pressed="${l === getLang()}">${t('lang.' + l)}</button>`)}</span></div>
           ${DevPanel.enabled ? html`<button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">${t('dev.title')}</span>${icon('chevronRight', 18)}</button>` : ''}
           <button type="button" class="si danger" data-action="logout">${icon('logout', 20)}<span class="grow">${t('profile.logout')}</span></button>
@@ -234,6 +235,45 @@ const IdeaEditView = {
   },
 };
 
+/* ---------- Blockierte Personen ---------- */
+const BlockedUsersView = {
+  async render(el, params, ctx) {
+    el.innerHTML = html`<header class="topbar bordered"><button type="button" class="icon-btn back" data-action="back" data-fallback="#/profile" aria-label="${t('common.back')}">${icon('back')}</button>
+      <div class="topbar-title sm">${t('blocked.title')}</div></header>
+      <div class="scroll"><div class="pad list">${UI.skeletonList(2)}</div></div>`;
+    const list = $('.list', el);
+    let users = [];
+    function render() {
+      list.innerHTML = users.length
+        ? html`<div class="info-note">${icon('info', 18)}<span>${t('blocked.info')}</span></div>
+          <div class="settings-list">${users.map(u => html`<div class="si">${UI.avatar(u, 36)}<span class="grow">${u.name}</span>
+            <button type="button" class="btn btn-secondary btn-xs" data-unblock="${u.id}">${t('blocked.unblock')}</button></div>`)}</div>`
+        : UI.empty({ emoji: '🕊️', title: t('blocked.noneTitle'), text: t('blocked.noneText') });
+    }
+    async function load() {
+      try {
+        users = await DataService.getBlockedUsers();
+        if (ctx.alive) render();
+      } catch (err) { if (ctx.alive) list.innerHTML = UI.errorState(err); }
+    }
+    el.addEventListener('click', async e => {
+      if (e.target.closest('[data-action="retry"]')) return load();
+      const b = e.target.closest('[data-unblock]');
+      if (!b || UI.isBusy(b)) return;
+      const u = users.find(x => x.id === b.dataset.unblock);
+      const ok = await UI.confirm({ icon: '🕊️', title: t('blocked.unblockTitle', { name: u.name }), text: t('blocked.unblockText'), confirmLabel: t('blocked.unblock') });
+      if (!ok) return;
+      UI.busy(b, true);
+      try {
+        await DataService.unblockUser(u.id);
+        UI.toast({ icon: '🕊️', title: t('blocked.unblocked', { name: u.name }), light: true, duration: 2200 });
+        await load();
+      } catch (err) { UI.busy(b, false); UI.handleError(err); }
+    });
+    await load();
+  },
+};
+
 /* =============================================================================
    ENTWICKLER-PANEL (nur npm run dev): Test-Logins, Konto wechseln, Supabase-Check
    ============================================================================= */
@@ -311,4 +351,4 @@ const DevPanel = {
   },
 };
 
-export { ProfileView, ProfileEditView, IdeaEditView, DevPanel };
+export { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, DevPanel };

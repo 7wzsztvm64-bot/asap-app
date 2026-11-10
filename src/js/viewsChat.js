@@ -1,7 +1,7 @@
 import { Util, html, Fmt, icon, TIME, Label } from './core.js';
 import { DataService } from './dataService.js';
 import { t } from '../i18n/index.js';
-import { $, $$, catStyle, bindSubmit, UI, App } from './uiCore.js';
+import { $, $$, catStyle, bindSubmit, UI, SafetyMenu, App } from './uiCore.js';
 
 /* =============================================================================
    ANSICHTEN: Chats (Liste), Chat (mit angehefteter Idee & Terminvorschlag), Meine Dates
@@ -79,7 +79,8 @@ const ChatView = {
     el.innerHTML = html`<header class="topbar chat-head bordered">
         <button type="button" class="icon-btn back" data-action="back" data-fallback="#/chats" aria-label="${t('common.back')}">${icon('back')}</button>
         <div class="who-slot" style="flex:1;min-width:0"><div class="sk-row" style="padding:0"><div class="skeleton sk-circle" style="width:40px;height:40px"></div><div class="sk-lines"><div class="skeleton sk-line" style="width:40%"></div></div></div></div>
-        <div class="actions"><button type="button" class="icon-btn" data-action="propose" aria-label="${t('chat.propose')}" disabled>${icon('calendarPlus')}</button></div>
+        <div class="actions"><button type="button" class="icon-btn" data-action="propose" aria-label="${t('chat.propose')}" disabled>${icon('calendarPlus')}</button>
+          <button type="button" class="icon-btn" data-action="safety" aria-label="${t('safety.menuAria')}" disabled>${icon('more')}</button></div>
       </header>
       <div class="pinned-slot" style="flex:none;padding-top:8px"></div>
       <div class="msgs static" role="log" aria-live="polite" aria-label="${t('chat.messages')}">${UI.loading()}</div>
@@ -169,7 +170,7 @@ const ChatView = {
         if (!ctx.alive) return;
         renderHeader(); renderPinned(); renderItems();
         msgs.scrollTop = msgs.scrollHeight;
-        $$('[data-action="propose"]', el).forEach(b => { b.disabled = false; });
+        $$('[data-action="propose"], [data-action="safety"]', el).forEach(b => { b.disabled = false; });
         DataService.markAsRead(matchId).then(() => App.refreshBadges()).catch(() => {});
       } catch (err) {
         if (!ctx.alive) return;
@@ -287,6 +288,7 @@ const ChatView = {
       switch (btn.dataset.action) {
         case 'toggle-pin': pinnedOpen = !pinnedOpen; renderPinned(); break;
         case 'propose': openProposal(); break;
+        case 'safety': SafetyMenu.open({ user: conv.other, context: { matchId, ideaId: conv.match.ideaId }, fallback: '#/chats' }); break;
         case 'retry': load(); break;
         case 'prop-confirm':
         case 'prop-decline': {

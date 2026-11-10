@@ -3,7 +3,7 @@ import { DataService } from './dataService.js';
 import { LoginView, RegisterView, OnboardingView } from './viewsAuth.js';
 import { FeedView, RequestsView, UserProfileView } from './viewsFeed.js';
 import { ChatsView, ChatView, DatesView } from './viewsChat.js';
-import { ProfileView, ProfileEditView, IdeaEditView, DevPanel } from './viewsProfile.js';
+import { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, DevPanel } from './viewsProfile.js';
 
 import { t, t as i18n, onLangChange } from '../i18n/index.js'; // i18n: wo „t“ als Schleifenvariable belegt ist
 /* =============================================================================
@@ -250,6 +250,36 @@ const LikeSheet = {
   },
 };
 
+/* ---------- Sicherheitsmenü (Profil anderer Personen & Chat) ---------- */
+const SafetyMenu = {
+  /** user: { id, name }, context: { ideaId?, matchId? } – nach dem Blockieren geht es zu fallback. */
+  open({ user, context = {}, fallback = '#/feed' }) {
+    UI.sheet({
+      title: user.name, subtitle: t('safety.subtitle'),
+      body: html`<div class="settings-list">
+        <button type="button" class="si danger" data-safety="block">${icon('ban', 20)}<span class="grow">${t('safety.block', { name: user.name })}</span></button>
+      </div><p class="hint" style="margin-top:12px">${t('safety.blockHint')}</p>`,
+      onMount(sheet, close) {
+        sheet.addEventListener('click', async e => {
+          const b = e.target.closest('[data-safety]');
+          if (!b) return;
+          close();
+          if (b.dataset.safety === 'block') SafetyMenu.block(user, fallback);
+        });
+      },
+    });
+  },
+  async block(user, fallback) {
+    const ok = await UI.confirm({ icon: '⛔', title: t('safety.blockTitle', { name: user.name }), text: t('safety.blockText'), confirmLabel: t('safety.blockConfirm'), danger: true });
+    if (!ok) return;
+    try {
+      await DataService.blockUser(user.id);
+      UI.toast({ icon: '⛔', title: t('safety.blocked', { name: user.name }), light: true, duration: 2600 });
+      App.go(fallback, { replace: true });
+    } catch (err) { UI.handleError(err); }
+  },
+};
+
 /* ---------- Match-Overlay (mit Konfetti) ---------- */
 const MatchOverlay = {
   queue: [],
@@ -358,6 +388,7 @@ const App = {
       { name: 'dates', re: /^#\/dates$/, view: DatesView, tab: 'dates', depth: 0 },
       { name: 'profile', re: /^#\/profile$/, view: ProfileView, tab: 'profile', depth: 0 },
       { name: 'profile-edit', re: /^#\/profile\/edit$/, view: ProfileEditView, depth: 1 },
+      { name: 'blocked', re: /^#\/profile\/blocked$/, view: BlockedUsersView, depth: 1 },
       { name: 'idea-new', re: /^#\/ideas\/new$/, view: IdeaEditView, depth: 2 },
       { name: 'idea-edit', re: /^#\/ideas\/([\w-]+)\/edit$/, view: IdeaEditView, depth: 2 },
       { name: 'user', re: /^#\/user\/([\w-]+)$/, view: UserProfileView, depth: 2 },
@@ -552,4 +583,4 @@ const App = {
   },
 };
 
-export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, LikeSheet, MatchOverlay, TABS, makeCtx, App };
+export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, LikeSheet, SafetyMenu, MatchOverlay, TABS, makeCtx, App };

@@ -19,7 +19,7 @@ Entscheidungen: echte Fotos, Start in Frankfurt, Deutsch + Englisch, Arbeitstite
 - [x] `npm install` und `npm run dev` laufen
 - [x] Supabase-Projekt in Region Frankfurt angelegt, `.env` aus `.env.example` erstellt
 - [ ] Namensprüfung „asap“: App Store + DPMA-Markenrecherche (zurückgestellt – vor Phase 5 erledigen)
-- [x] Issues für Phase 1 (unten) in GitHub angelegt (#1–#12)
+- [x] Issues für Phase 1 (unten) in GitHub angelegt (#1–#12) – Skript: `scripts/create-issues.sh 1`
 
 ## Phase 1 – Issues zum Kopieren
 Jeweils: Titel – Ziel. *Fertig, wenn …*
@@ -36,6 +36,17 @@ Jeweils: Titel – Ziel. *Fertig, wenn …*
 10. **Simulation entfernen** – Bot-Engine raus, `seed.js` wird SQL-Seed für eine Test-Datenbank; Dev-Panel nur noch im Dev-Modus. *Fertig, wenn der Produktionsbuild keine Testpersonen mehr enthält.*
 11. **Texte migrieren (laufend)** – bei jedem Issue die angefassten Texte nach `de.json`/`en.json`. *Fertig (Ende Phase 2), wenn es einen Sprachumschalter im Profil gibt und die App komplett auf Englisch nutzbar ist.*
 12. **Abnahmetest mit zwei Handys** – Registrieren → Idee → Like → Match → Chat → Termin. *Fertig, wenn der Ablauf ohne Fehler durchläuft.*
+
+## Phase 2 – Sicherheit & Pflichtfunktionen – Issues zum Kopieren
+Jeweils: Titel – Ziel. *Fertig, wenn …* · 18+ ist bereits serverseitig erledigt (#5).
+
+13. **Blockieren** – Person im Profil oder Chat blockieren; Match, Chat und Anfragen verschwinden für beide, ohne Benachrichtigung; Liste „Blockierte Personen“ im Profil mit Aufheben. *Fertig, wenn nach dem Blockieren keine Seite mehr Profil, Ideen oder Nachrichten der anderen sieht (Test belegt das).*
+14. **Melden** – Profil, Idee oder Chat mit Grund (und optional Text) melden; dabei wird zusätzlich blockiert. Meldungen stehen in `reports` (Supabase-Dashboard). *Fertig, wenn eine Meldung mit Grund gespeichert wird und die gemeldete Person danach nicht mehr sichtbar ist.*
+15. **Konto löschen** – im Profil mit Bestätigung; löscht Konto und alle Daten vollständig (DSGVO Art. 17), Meldungen bleiben ohne Personenbezug. *Fertig, wenn nach dem Löschen keine Zeile mit der Nutzer-ID mehr existiert (Test belegt das).*
+16. **Daten herunterladen** – eigene Daten als JSON-Datei (DSGVO Art. 15/20). *Fertig, wenn die Datei Profil, Ideen, Likes, Matches, Nachrichten und Termine enthält.*
+17. **Passwort vergessen** – Link per Mail, danach neues Passwort setzen. *Fertig, wenn der Ablauf mit echter Mail funktioniert (braucht Mailversand, #4).*
+18. **Foto-Upload mit Prüfung** – echte Fotos statt Platzhalter: Supabase Storage (privater Bucket), Verkleinern im Browser, Prüfung vor der Freischaltung. *Fertig, wenn hochgeladene Fotos erst nach der Prüfung für andere sichtbar sind.*
+19. **Missbrauchsschutz** – serverseitige Obergrenzen gegen Spam (Likes pro Tag, Nachrichten pro Minute, Meldungen pro Tag). *Fertig, wenn Überschreitungen abgelehnt werden (Test belegt das).*
 
 ## Für später vermerkt
 - **Phase 5 (Recht & Store):** Schutz vor geleakten Passwörtern in Supabase Auth aktivieren (Abgleich mit HaveIBeenPwned; Empfehlung des Security Advisors, ggf. kostenpflichtiger Tarif) – zusammen mit Datenschutzerklärung entscheiden.

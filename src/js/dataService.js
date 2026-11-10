@@ -643,6 +643,31 @@ const DataService = (() => {
       });
     },
 
+    /* ----- Sicherheit: Blockieren ----- */
+    /** Blockiert eine Person: Profil, Ideen, Match und Chat verschwinden für beide (Daten bleiben erhalten). */
+    blockUser(userId) {
+      return request('blocks.insert', async () => {
+        if (!isUuid(userId)) throw apiError('NOT_FOUND');
+        const { error } = await supabase.from('blocks').insert({ blocker_id: await myId(), blocked_id: userId });
+        if (error && error.code !== '23505') throw error; // schon blockiert → egal
+        changed('block');
+        return true;
+      });
+    },
+    unblockUser(userId) {
+      return request('blocks.delete', async () => {
+        unwrap(await supabase.from('blocks').delete().eq('blocker_id', await myId()).eq('blocked_id', userId));
+        changed('block');
+        return true;
+      });
+    },
+    getBlockedUsers() {
+      return request('rpc.get_blocked_users', async () => {
+        const rows = await rpc('get_blocked_users');
+        return rows.map(r => ({ id: r.id, name: r.name, photos: r.photo ? [r.photo] : [], blockedAt: ms(r.blocked_at) }));
+      });
+    },
+
     /* ----- Entwickler-Funktionen (nur mit npm run dev; im Produktionsbuild null) ----- */
     dev: import.meta.env.DEV ? {
       /** Login-Testkonten aus dem Seed (npm run db:seed) – mit den UUIDs, die das Seed-Skript vergibt. */
