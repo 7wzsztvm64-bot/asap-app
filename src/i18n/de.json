@@ -637,5 +637,21 @@
     "unblockTitle": "Blockierung von {name} aufheben?",
     "unblockText": "Ihr seht euch danach wieder – auch ein früherer Chat taucht wieder auf.",
     "unblocked": "{name} ist nicht mehr blockiert"
+  },
+  "privacy": {
+    "title": "Datenschutz",
+    "export": "Meine Daten herunterladen",
+    "delete": "Konto löschen",
+    "fileName": "meine-daten",
+    "exported": "Deine Daten wurden heruntergeladen",
+    "deleteTitle": "Konto endgültig löschen?",
+    "deleteSub": "Das kann nicht rückgängig gemacht werden.",
+    "deletePoint1": "Dein Profil, deine Ideen, Likes, Matches, Chats und Termine werden sofort gelöscht.",
+    "deletePoint2": "Deine Matches sehen euren gemeinsamen Chat danach nicht mehr.",
+    "deletePoint3": "Tipp: Lade vorher deine Daten herunter, wenn du sie behalten möchtest.",
+    "confirmPassword": "Zur Sicherheit: dein Passwort",
+    "deleteConfirm": "Endgültig löschen",
+    "deleted": "Dein Konto wurde gelöscht",
+    "deletedText": "Schade, dass du gehst. Alles Gute!"
   }
 }

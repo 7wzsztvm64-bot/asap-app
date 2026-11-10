@@ -49,6 +49,11 @@ const ProfileView = {
           ${DevPanel.enabled ? html`<button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">${t('dev.title')}</span>${icon('chevronRight', 18)}</button>` : ''}
           <button type="button" class="si danger" data-action="logout">${icon('logout', 20)}<span class="grow">${t('profile.logout')}</span></button>
         </div>
+        <div class="section-title">${t('privacy.title')}</div>
+        <div class="settings-list">
+          <button type="button" class="si" data-action="export">${icon('download', 20)}<span class="grow">${t('privacy.export')}</span></button>
+          <button type="button" class="si danger" data-action="delete-account">${icon('trash', 20)}<span class="grow">${t('privacy.delete')}</span></button>
+        </div>
         <p class="foot-note">${t('profile.version')}<br>${t('profile.storage')}</p>`;
     }
     async function load(silent = false) {
@@ -83,6 +88,22 @@ const ProfileView = {
           try { await DataService.logout(); UI.toast({ icon: '👋', title: t('profile.bye'), light: true, duration: 2000 }); } catch (err) { UI.busy(btn, false); UI.handleError(err); }
           return;
         }
+        case 'export': {
+          UI.busy(btn, true);
+          try {
+            const data = await DataService.exportMyData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `asap-${t('privacy.fileName')}-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            UI.toast({ icon: '📦', title: t('privacy.exported'), light: true, duration: 2400 });
+          } catch (err) { UI.handleError(err); }
+          UI.busy(btn, false);
+          return;
+        }
+        case 'delete-account': return openDeleteAccount();
         case 'toggle-idea': {
           const activate = btn.dataset.active !== '1';
           UI.busy(btn, true);
@@ -109,6 +130,28 @@ const ProfileView = {
         }
       }
     });
+    function openDeleteAccount() {
+      UI.sheet({
+        title: t('privacy.deleteTitle'), subtitle: t('privacy.deleteSub'),
+        body: html`<ul class="hint" style="margin:0 0 14px;padding-left:18px;line-height:1.6">
+            <li>${t('privacy.deletePoint1')}</li><li>${t('privacy.deletePoint2')}</li><li>${t('privacy.deletePoint3')}</li></ul>
+          <div class="field" data-field="password"><label class="label" for="del-pw">${t('privacy.confirmPassword')}</label>
+            <input id="del-pw" class="input" type="password" autocomplete="current-password" placeholder="••••••••"></div>`,
+        foot: html`<button type="button" class="btn btn-secondary" data-close>${t('common.cancel')}</button><button type="button" class="btn btn-danger" style="flex:1" data-delete>${icon('trash', 17)} ${t('privacy.deleteConfirm')}</button>`,
+        onMount(sheet, close) {
+          sheet.addEventListener('click', async e => {
+            const del = e.target.closest('[data-delete]');
+            if (!del || UI.isBusy(del)) return;
+            UI.busy(del, true);
+            try {
+              await DataService.deleteAccount($('#del-pw', sheet).value);
+              close();
+              UI.toast({ icon: '👋', title: t('privacy.deleted'), text: t('privacy.deletedText'), light: true, duration: 4200 });
+            } catch (err) { UI.busy(del, false); UI.handleError(err, $('.sheet-body', sheet)); }
+          });
+        },
+      });
+    }
     ctx.on('change', Util.debounce(() => { if (ctx.alive) load(true); }, 500));
     await load();
   },

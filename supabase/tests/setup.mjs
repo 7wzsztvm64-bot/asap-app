@@ -12,7 +12,7 @@ const SUPABASE_ENV = `
   create role authenticated nologin noinherit;
   create role service_role nologin noinherit bypassrls;
   create schema auth;
-  create table auth.users (id uuid primary key default gen_random_uuid(), email text);
+  create table auth.users (id uuid primary key default gen_random_uuid(), email text, created_at timestamptz default now(), last_sign_in_at timestamptz);
   create function auth.uid() returns uuid language sql stable as $$
     select (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid
   $$;

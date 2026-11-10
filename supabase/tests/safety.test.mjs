@@ -115,3 +115,45 @@ test('Melden: höchstens 10 Meldungen pro Tag', async () => {
   await t.asAdmin();
   await t.db.query(`delete from public.reports`);
 });
+
+/* ---------- #16 Daten herunterladen ---------- */
+test('Datenexport: eigene Daten vollständig, keine Nachrichten anderer', async () => {
+  await t.as(JONAS);
+  const { d } = await t.one(`select public.export_my_data() as d`);
+  assert.equal(d.profile.name, 'Jonas');
+  assert.equal(d.ideas.length, 1);
+  assert.equal(d.matches.length, 1);
+  assert.equal(d.matches[0].with, 'Mia');
+  assert.deepEqual(d.messagesSent.map(m => m.text), ['Hi Mia'], 'nur eigene Nachrichten');
+  assert.equal(d.dateProposals.length, 1);
+  assert.equal(d.dateProposals[0].proposedByMe, true);
+  assert.equal(d.likesReceived.length, 1, 'Lenas Anfrage');
+  assert.ok(!JSON.stringify(d).includes('Hi Jonas'), 'Mias Nachricht fehlt');
+  assert.ok(!JSON.stringify(d).includes('interested_in') || d.profile.interested_in, 'eigenes „Interessiert an“ ist dabei');
+});
+
+/* ---------- #15 Konto löschen ---------- */
+test('Konto löschen: keine Zeile mit der Nutzer-ID bleibt übrig, Meldungen ohne Personenbezug', async () => {
+  await t.as(LENA);
+  await t.db.query(`select public.report_user($1, 'spam', null, null, null, true)`, [JONAS]);
+  await t.db.query(`insert into public.passes (user_id, idea_id) values ($1, $2)`, [LENA, I_MIA]);
+  await t.as(JONAS);
+  await t.db.query(`select public.delete_my_account()`);
+  await t.asAdmin();
+  const leftovers = await t.one(`select
+    (select count(*) from auth.users where id = $1) as users,
+    (select count(*) from public.profiles where id = $1) as profiles,
+    (select count(*) from public.ideas where owner_id = $1) as ideas,
+    (select count(*) from public.likes where $1 in (from_user_id, to_user_id)) as likes,
+    (select count(*) from public.matches where $1 in (user1_id, user2_id)) as matches,
+    (select count(*) from public.messages where sender_id = $1) as messages,
+    (select count(*) from public.proposals where proposed_by = $1) as proposals,
+    (select count(*) from public.passes where user_id = $1) as passes,
+    (select count(*) from public.blocks where $1 in (blocker_id, blocked_id)) as blocks,
+    (select count(*) from public.reports where $1 in (reporter_id, reported_id)) as reports`, [JONAS]);
+  assert.ok(Object.values(leftovers).every(n => Number(n) === 0), JSON.stringify(leftovers));
+  assert.equal((await t.rows(`select * from public.reports where reported_id is null and reason = 'spam'`)).length, 1, 'Meldung bleibt anonymisiert');
+  assert.equal((await t.rows(`select * from public.messages where match_id = $1`, [MATCH])).length, 0, 'gemeinsamer Chat ist weg');
+  await t.asAnon();
+  await assert.rejects(t.db.query(`select public.delete_my_account()`), DENIED);
+});

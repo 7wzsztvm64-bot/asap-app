@@ -677,6 +677,32 @@ const DataService = (() => {
       });
     },
 
+    /* ----- Konto & Datenschutz (DSGVO) ----- */
+    /** Eigene Daten als Objekt (für den Download als JSON-Datei). */
+    exportMyData() {
+      return request('rpc.export_my_data', () => rpc('export_my_data'));
+    },
+    /** Konto und alle Daten endgültig löschen. Das Passwort wird vorher erneut geprüft. */
+    deleteAccount(password) {
+      return request('rpc.delete_my_account', async () => {
+        const { data } = await supabase.auth.getSession();
+        const email = data.session && data.session.user.email;
+        if (!email) throw apiError('UNAUTHORIZED');
+        if (!password) throw validationError({ password: t('validation.passwordMissing') });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (error.code === 'invalid_credentials') throw validationError({ password: t('errors.INVALID_CREDENTIALS') });
+          throw error;
+        }
+        await rpc('delete_my_account');
+        knownUserId = null;
+        stopRealtime();
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {}); // Konto ist weg – nur noch lokal aufräumen
+        emit('session', { userId: null });
+        return true;
+      });
+    },
+
     /* ----- Entwickler-Funktionen (nur mit npm run dev; im Produktionsbuild null) ----- */
     dev: import.meta.env.DEV ? {
       /** Login-Testkonten aus dem Seed (npm run db:seed) – mit den UUIDs, die das Seed-Skript vergibt. */

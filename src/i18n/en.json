@@ -637,5 +637,21 @@
     "unblockTitle": "Unblock {name}?",
     "unblockText": "You'll see each other again – an earlier chat will reappear too.",
     "unblocked": "{name} is no longer blocked"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "export": "Download my data",
+    "delete": "Delete account",
+    "fileName": "my-data",
+    "exported": "Your data has been downloaded",
+    "deleteTitle": "Delete account permanently?",
+    "deleteSub": "This can't be undone.",
+    "deletePoint1": "Your profile, ideas, likes, matches, chats and dates are deleted immediately.",
+    "deletePoint2": "Your matches will no longer see your shared chat.",
+    "deletePoint3": "Tip: download your data first if you want to keep it.",
+    "confirmPassword": "For your security: your password",
+    "deleteConfirm": "Delete permanently",
+    "deleted": "Your account has been deleted",
+    "deletedText": "Sorry to see you go. All the best!"
   }
 }
