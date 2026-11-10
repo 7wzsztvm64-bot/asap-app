@@ -1,4 +1,4 @@
-/* Supabase-Client – wird NUR von der Datenschicht importiert (dataService.js, supabaseBackend.js, mockBackend.js).
+/* Supabase-Client – wird NUR von der Datenschicht importiert (dataService.js).
    URL und Key kommen aus der .env (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY).
    Nur der öffentliche anon/publishable Key gehört hierher – niemals der service_role Key. */
 import { createClient } from '@supabase/supabase-js';

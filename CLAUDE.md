@@ -8,30 +8,29 @@
 
 ## Stack
 - Vite 8, Vanilla JavaScript als ES-Module, kein UI-Framework.
-- Zwei Backends hinter `DataService` mit identischer API: **Mock** (localStorage + simulierte Testpersonen, Standard) und **Supabase** (aktiv mit `VITE_BACKEND=supabase` in `.env`). Das Mock-Backend entfällt mit Issue #10.
-- Phase 1: **Supabase** (Projekt in Region Frankfurt, eu-central-1) für Login, Datenbank, Realtime-Chat, Datei-Speicher.
+- Backend: **Supabase** (Projekt in Region Frankfurt, eu-central-1) für Login, Datenbank, Realtime-Chat, später Datei-Speicher. Das frühere Mock-Backend ist entfernt (#10). Das jetzige Projekt ist das Entwicklungs-/Testprojekt.
 - Phase 4: **Capacitor** für die iOS-App.
 
 ## Befehle
 - `npm install` – Abhängigkeiten
-- `npm run dev` – Entwicklungsserver (http://localhost:5173); im Browser ist `window.asap` zum Debuggen verfügbar
+- `npm run dev` – Entwicklungsserver (http://localhost:5173); im Browser ist `window.asap` zum Debuggen verfügbar, Entwickler-Panel mit Test-Logins nur hier
+- `npm run dev:lan` – wie `dev`, aber im WLAN erreichbar (für Handys, siehe `docs/ABNAHMETEST.md`)
 - `npm run build` – Produktionsbuild nach `dist/`
 - `npm run preview` – Build lokal ansehen
 - `npm run test:db` – spielt alle Migrationen in ein lokales Test-Postgres (PGlite) und prüft die RLS-Regeln
 - `npm run db:migrate` – spielt fehlende Migrationen ins echte Supabase-Projekt ein (braucht `SUPABASE_ACCESS_TOKEN` in `.env`); vorher `npm run test:db`
 - `npm run db:seed` – Testpersonen in Supabase neu anlegen (alle `@datedate.app`-Konten, Passwort `Test1234`; löscht vorher die alten)
+- `npm run db:auth` – Auth-Einstellungen aus `supabase/auth/` übernehmen (+ SMTP aus `.env`, falls gesetzt)
 - `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration)
 
 ## Struktur
 - `index.html` – Grundgerüst (Smartphone-Rahmen auf dem Desktop, App-Container)
 - `src/main.js` – Einstieg, startet die App
 - `src/styles/app.css` – alle Styles (Design-Tokens oben in `:root`)
-- `src/js/core.js` – Hilfsfunktionen, `html`-Template (escaped!), Formatierung, Icons, Konstanten, SHA-256, Storage-Adapter
-- `src/js/seed.js` – Testdaten (20 Personen + 2 Test-Logins)
-- `src/js/dataService.js` – **einzige Datenschicht für die UI**: wählt das Backend (`VITE_BACKEND`)
-- `src/js/mockBackend.js` – Mock-Backend (localStorage) + Bot-Simulation
-- `src/js/supabaseBackend.js` – Supabase-Backend inkl. Realtime (Events wie im Mock); Fehler aus DB-Funktionen kommen als Code (`raise exception … message = 'CODE'`) und werden über `t('errors.CODE')` übersetzt
-- `src/js/domain.js` – Fachlogik für beide Backends (Validierung, Entfernung, Feed-Sortierung)
+- `src/js/core.js` – Hilfsfunktionen, `html`-Template (escaped!), Formatierung, Icons, Konstanten, Storage-Adapter
+- `src/js/seed.js` – Testdaten (20 Personen + 2 Test-Logins) für `npm run db:seed` und das Entwickler-Panel; nicht im Produktionsbuild
+- `src/js/dataService.js` – **einzige Datenschicht**: Supabase-Zugriff inkl. Realtime-Events; Fehler aus DB-Funktionen kommen als Code (`raise exception … message = 'CODE'`) und werden über `t('errors.CODE')` übersetzt. `DataService.dev` gibt es nur mit `npm run dev`
+- `src/js/domain.js` – Fachlogik der Datenschicht (Validierung, Entfernung, Feed-Sortierung)
 - `src/js/supabase.js` – Supabase-Client („Eingeloggt bleiben“ über eigenen Storage-Adapter)
 - `src/js/uiCore.js` – UI-Bausteine, Toasts, Sheets, Match-Overlay, Router (`App`)
 - `src/js/views*.js` – Ansichten (Auth/Onboarding, Feed/Anfragen/Profile, Chats/Dates, eigenes Profil/Dev-Panel)
@@ -39,6 +38,9 @@
 - `src/i18n/` – Übersetzungen `de.json`, `en.json` und die Funktion `t()`
 - `supabase/migrations/` – SQL-Migrationen (Schema, RLS); eingespielt mit `npm run db:migrate`, bereits angewendete stehen in `supabase_migrations.schema_migrations`. Eingespielte Dateien nie ändern, sondern neue Migration anlegen
 - `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
+- `supabase/auth/` – Auth-Einstellungen und Mail-Vorlage (übernehmen mit `npm run db:auth`)
+- `scripts/db.mjs` – Werkzeug für `db:migrate`, `db:seed`, `db:auth`, `db:query` (Supabase Management-API)
+- `docs/ABNAHMETEST.md` – Checkliste für den Test mit zwei Handys (#12)
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
 - `prototype/dabei-prototype.html` – ursprünglicher Single-File-Prototyp, **nur Referenz, nicht ändern**
 
@@ -49,10 +51,10 @@
 4. **Sicherheit:** Row Level Security auf jeder Supabase-Tabelle. Niemals den `service_role`-Key im Frontend. Geheimnisse nur in `.env` (wird nicht committet).
 5. **DSGVO:** Datensparsam arbeiten. „Interessiert an“ (sexuelle Orientierung) und Fotos sind sensible Daten – nur speichern, was die Funktion braucht; Löschen muss vollständig möglich sein.
 6. **Zirkuläre Imports** zwischen `uiCore.js` und den `views*.js` sind gewollt. Importierte Werte deshalb nie auf oberster Modulebene benutzen, nur innerhalb von Funktionen.
-7. **Kleine Schritte:** Eine Aufgabe = ein GitHub-Issue. Vor „fertig“: `npm run build` ohne Fehler und den Hauptablauf im Browser prüfen (Login `test1@datedate.app` / `Test1234` → liken → Chat). Am Ende kurz beschreiben, wie Noah es selbst testet.
+7. **Kleine Schritte:** Eine Aufgabe = ein GitHub-Issue. Vor „fertig“: `npm run build` ohne Fehler und den Hauptablauf im Browser prüfen mit zwei Konten in zwei getrennten Fenstern (`test1@datedate.app` und `test2@datedate.app`, Passwort `Test1234`: liken → annehmen → Chat in Echtzeit). Am Ende kurz beschreiben, wie Noah es selbst testet.
 8. **Keine neuen Abhängigkeiten** ohne kurze Begründung und Rückfrage.
 9. **Commits** auf Deutsch, kurz und beschreibend; nie direkt `.env` oder Schlüssel committen.
 
 ## Aktueller Stand
-- Phase 0 erledigt. Phase 1: #1–#3 und #5–#9 umgesetzt (Supabase-Backend komplett, per `VITE_BACKEND=supabase` nutzbar). Offen: #4 (Bestätigungs-Mail – braucht Auth-Einstellungen/SMTP), #10 (Mock entfernen), #11 (Texte), #12 (Abnahmetest mit zwei Handys).
+- Phase 0 erledigt. Phase 1: #1–#3 und #5–#10 erledigt. Offen: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #11 (Texte, laufend), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.

@@ -353,7 +353,7 @@ const App = {
       { name: 'user', re: /^#\/user\/([\w-]+)$/, view: UserProfileView, depth: 2 },
     ];
   },
-  needsOnboarding(u) { return !!u && (!u.profileComplete || !u.botLikesSeeded); },
+  needsOnboarding(u) { return !!u && (!u.profileComplete || !u.firstIdeaCreated); },
   homeFor(u) { return !u ? '#/login' : this.needsOnboarding(u) ? '#/onboarding' : '#/feed'; },
 
   go(hash, { replace = false } = {}) {
@@ -502,7 +502,7 @@ const App = {
     $('#views').innerHTML = '';
 
     // ---- Globale Ereignisse (später: WebSocket/Push vom Backend) ----
-    DataService.on('change', () => { this.refreshBadges(); DevPanel.refreshSoon(); });
+    DataService.on('change', () => this.refreshBadges());
     DataService.on('match', d => MatchOverlay.show(d));
     DataService.on('message', d => {
       if (this.activeChatId === d.matchId) return;

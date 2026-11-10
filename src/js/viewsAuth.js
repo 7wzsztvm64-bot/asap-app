@@ -36,6 +36,8 @@ function authHero() {
 
 const LoginView = {
   async render(el) {
+    // Test-Login-Hinweis nur mit npm run dev (im Produktionsbuild ist DataService.dev null)
+    const demo = DataService.dev ? DataService.dev.testAccounts()[0] : null;
     el.innerHTML = html`<div class="auth">${authHero()}
       <form class="auth-form" novalidate>
         <h2>Willkommen zurück</h2>
@@ -48,15 +50,14 @@ const LoginView = {
         <div class="auth-row"><label class="check"><input type="checkbox" name="remember" checked><span class="box">${icon('check', 14, 3)}</span>Eingeloggt bleiben</label></div>
         <button class="btn btn-primary btn-block" type="button" data-submit>Anmelden</button>
         <p class="auth-switch">Neu bei asap? <a href="#/register" class="link-btn">Konto erstellen</a></p>
-        <div class="demo-hint"><span style="font-size:22px" aria-hidden="true">🧪</span>
-          <span class="grow"><b>Test-Login:</b> test1@datedate.app<br>Passwort: Test1234</span>
-          <button type="button" class="btn btn-soft btn-xs" data-action="fill">Ausfüllen</button></div>
+        ${demo ? html`<div class="demo-hint"><span style="font-size:22px" aria-hidden="true">🧪</span>
+          <span class="grow"><b>${t('auth.testLogin')}</b> ${demo.email}<br>${t('dev.password')}: ${demo.password}</span>
+          <button type="button" class="btn btn-soft btn-xs" data-action="fill">${t('auth.fill')}</button></div>` : ''}
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
     form.addEventListener('click', e => {
-      if (e.target.closest('[data-action="fill"]')) {
-        const demo = DataService.dev.testAccounts()[0];
+      if (demo && e.target.closest('[data-action="fill"]')) {
         form.email.value = demo.email;
         form.password.value = demo.password;
         UI.clearErrors(form);
@@ -102,7 +103,7 @@ const RegisterView = {
           <div class="input-wrap"><input id="re-pw2" class="input" type="password" name="passwordRepeat" autocomplete="new-password" placeholder="••••••••">
           <button type="button" class="reveal" data-action="reveal" aria-label="Passwort anzeigen">${icon('eye', 20)}</button></div></div>
         <button class="btn btn-primary btn-block" type="button" data-submit>Konto erstellen</button>
-        <p class="legal">${t('auth.registerNote.' + DataService.backend)}</p>
+        <p class="legal">${t('auth.registerNote')}</p>
         <p class="auth-switch">Schon dabei? <a href="#/login" class="link-btn">Anmelden</a></p>
       </form></div>`;
     const form = $('form', el);

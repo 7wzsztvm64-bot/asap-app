@@ -12,10 +12,9 @@
     "register": "Create account",
     "rememberMe": "Stay logged in",
     "wrongCredentials": "Email or password is incorrect.",
-    "registerNote": {
-      "mock": "Prototype: please don't use real passwords. All data stays local in your browser.",
-      "supabase": "Development version: your data is stored on the asap server in Frankfurt (Supabase)."
-    }
+    "registerNote": "Development version: your data is stored on the asap server in Frankfurt (Supabase).",
+    "testLogin": "Test login:",
+    "fill": "Fill in"
   },
   "feed": {
     "like": "I'm in!",
@@ -34,9 +33,18 @@
       "notConfigured": "Supabase not set up",
       "notConfiguredText": "Create .env from .env.example and restart the dev server."
     },
-    "backend": "Active backend",
-    "mockOnly": "Only available in the mock backend. Recreate test data in Supabase: npm run db:seed",
-    "supabaseLogins": "Switching logs you in with the test password. For two accounts at once, use a second (private) browser window."
+    "title": "Developer panel",
+    "close": "Close",
+    "current": "Currently logged in",
+    "inOnboarding": "(in onboarding)",
+    "logout": "Log out",
+    "nobody": "Nobody logged in.",
+    "testLogins": "Test logins",
+    "password": "Password",
+    "active": "Active",
+    "switch": "Switch",
+    "switched": "Logged in as {name}",
+    "testLoginsNote": "“Switch” logs you in as that person in this window. For two accounts at once, use a second, private browser window. Reset test data: npm run db:seed"
   },
   "errors": {
     "UNAUTHORIZED": "Your session has expired. Please log in again.",
@@ -121,9 +129,6 @@
   },
   "profile": {
     "version": "asap · development version",
-    "storage": {
-      "mock": "All data is stored locally in your browser ({mode}).",
-      "supabase": "Your data is stored on the asap server (Supabase, Frankfurt)."
-    }
+    "storage": "Your data is stored on the asap server (Supabase, Frankfurt)."
   }
 }

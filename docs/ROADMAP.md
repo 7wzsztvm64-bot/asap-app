@@ -36,3 +36,8 @@ Jeweils: Titel – Ziel. *Fertig, wenn …*
 10. **Simulation entfernen** – Bot-Engine raus, `seed.js` wird SQL-Seed für eine Test-Datenbank; Dev-Panel nur noch im Dev-Modus. *Fertig, wenn der Produktionsbuild keine Testpersonen mehr enthält.*
 11. **Texte migrieren (laufend)** – bei jedem Issue die angefassten Texte nach `de.json`/`en.json`. *Fertig (Ende Phase 2), wenn es einen Sprachumschalter im Profil gibt und die App komplett auf Englisch nutzbar ist.*
 12. **Abnahmetest mit zwei Handys** – Registrieren → Idee → Like → Match → Chat → Termin. *Fertig, wenn der Ablauf ohne Fehler durchläuft.*
+
+## Für später vermerkt
+- **Phase 5 (Recht & Store):** Schutz vor geleakten Passwörtern in Supabase Auth aktivieren (Abgleich mit HaveIBeenPwned; Empfehlung des Security Advisors, ggf. kostenpflichtiger Tarif) – zusammen mit Datenschutzerklärung entscheiden.
+- **Phase 3 (Web-Beta) / 5:** Eigene Domain für asap (nach der Namensprüfung) → Mails von einer eigenen Absenderadresse (SPF/DKIM) statt der einzelnen in Brevo bestätigten Adresse; Site URL/Weiterleitungen in `supabase/auth/config.json` auf die echte Adresse umstellen.
+- **Vor Phase 3:** Getrenntes Supabase-Projekt für Produktion (das jetzige bleibt Test-/Entwicklungsprojekt mit `npm run db:seed`).

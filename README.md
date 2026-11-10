@@ -2,7 +2,7 @@
 
 Dating-App, in der man konkrete Date-Ideen statt Profile likt – „Erst die Idee, dann das Date“. Arbeitstitel, vorher „dabei“.
 
-Stand: klickbarer Prototyp mit simuliertem Backend (localStorage, Testpersonen) als Vite-Projekt. Nächster Schritt ist das echte Backend mit Supabase – siehe `docs/ROADMAP.md`.
+Stand: Vite-Web-App mit echtem Backend (Supabase, Frankfurt): Registrierung, Onboarding, Ideen, Feed, Likes, Matches, Echtzeit-Chat und Termine. Plan und nächste Schritte: `docs/ROADMAP.md`.
 
 ## Loslegen (Mac)
 
@@ -11,10 +11,11 @@ Voraussetzungen: Git, Node.js (LTS-Version), VS Code mit der Erweiterung „Clau
 ```bash
 cd ~/Projekte/asap-app   # Ordner, in den du das Startpaket entpackt hast
 npm install              # lädt Vite (einmalig)
+cp .env.example .env     # Supabase-URL und Keys eintragen (siehe Kommentare in der Datei)
 npm run dev              # startet die App unter http://localhost:5173
 ```
 
-Test-Login: `test1@datedate.app` / `Test1234` (zweiter Account: `test2@datedate.app`). Das Entwickler-Panel (Zahnrad) setzt Daten zurück und wechselt Accounts.
+Test-Logins: `test1@datedate.app` und `test2@datedate.app`, Passwort `Test1234` – für zwei Konten gleichzeitig ein zweites, privates Browserfenster nutzen. Das Entwickler-Panel (Zahnrad, nur mit `npm run dev`) wechselt Accounts; `npm run db:seed` setzt die Testdaten zurück.
 
 ## Mit GitHub verbinden (einmalig)
 
@@ -39,6 +40,11 @@ Beim ersten Push fragt Git nach Zugangsdaten. Gib als Benutzernamen deinen GitHu
 | `npm run dev` | Entwicklungsserver mit automatischem Neuladen |
 | `npm run build` | Produktionsbuild nach `dist/` |
 | `npm run preview` | Produktionsbuild lokal ansehen |
+| `npm run dev:lan` | Entwicklungsserver im WLAN (für Tests auf Handys) |
+| `npm run test:db` | Datenbank-Tests (Migrationen + RLS) lokal |
+| `npm run db:migrate` | Neue Migrationen ins Supabase-Projekt einspielen |
+| `npm run db:seed` | Testpersonen in Supabase neu anlegen |
+| `npm run db:auth` | Auth-Einstellungen (und Mailversand) übernehmen |
 
 ## Arbeiten mit Claude Code
 

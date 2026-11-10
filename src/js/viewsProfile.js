@@ -44,10 +44,10 @@ const ProfileView = {
         <div class="section-title">Konto</div>
         <div class="settings-list">
           <div class="si">${icon('mail', 20)}<span class="grow">E-Mail</span><span class="val">${me.email}</span></div>
-          <button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">Entwickler-Panel</span>${icon('chevronRight', 18)}</button>
+          ${DevPanel.enabled ? html`<button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">${t('dev.title')}</span>${icon('chevronRight', 18)}</button>` : ''}
           <button type="button" class="si danger" data-action="logout">${icon('logout', 20)}<span class="grow">Abmelden</span></button>
         </div>
-        <p class="foot-note">${t('profile.version')}<br>${t('profile.storage.' + DataService.backend, { mode: DataService.storageMode })}</p>`;
+        <p class="foot-note">${t('profile.version')}<br>${t('profile.storage')}</p>`;
     }
     async function load(silent = false) {
       try {
@@ -232,112 +232,55 @@ const IdeaEditView = {
 };
 
 /* =============================================================================
-   ENTWICKLER-PANEL (Test-Logins, Account-Wechsel, Simulation, Reset)
+   ENTWICKLER-PANEL (nur npm run dev): Test-Logins, Konto wechseln, Supabase-Check
    ============================================================================= */
 const DevPanel = {
   isOpen: false,
-  confirmReset: false,
-  selectedUser: '',
+  enabled: false,
   init() {
+    // Nur mit npm run dev – im Produktionsbuild gibt es weder Panel noch Testkonten
+    if (!import.meta.env.DEV || !DataService.dev) { $('#dev-toggle').remove(); $('#dev-panel').remove(); return; }
+    this.enabled = true;
     $('#dev-toggle').addEventListener('click', () => this.toggle());
-    const panel = $('#dev-panel');
-    panel.addEventListener('click', e => this.onClick(e));
-    panel.addEventListener('change', e => {
-      if (e.target.matches('[data-dev="auto"]')) {
-        const s = DataService.dev.setAutoReplies(e.target.checked);
-        UI.toast({ icon: s.autoReplies ? '🤖' : '⏸️', title: s.autoReplies ? 'Auto-Antworten an' : 'Auto-Antworten aus', text: s.autoReplies ? 'Testaccounts reagieren wieder automatisch.' : 'Geplante Reaktionen sind pausiert.', light: true, duration: 2200 });
-      }
-      if (e.target.matches('[data-dev-select]')) this.selectedUser = e.target.value;
-    });
+    $('#dev-panel').addEventListener('click', e => this.onClick(e));
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && this.isOpen && !$('#overlay-root > *')) this.toggle(false); });
-    DataService.on('settings', () => this.refresh());
   },
   toggle(force) {
+    if (!this.enabled) return;
     const open = typeof force === 'boolean' ? force : !this.isOpen;
     if (open === this.isOpen) return;
     this.isOpen = open;
     const panel = $('#dev-panel');
     $('#dev-toggle').setAttribute('aria-expanded', String(open));
     document.body.classList.toggle('dev-open', open);
-    if (open) { panel.hidden = false; panel.classList.remove('out'); this.confirmReset = false; this.render(); }
+    if (open) { panel.hidden = false; panel.classList.remove('out'); this.render(); }
     else { panel.classList.add('out'); setTimeout(() => { if (!this.isOpen) panel.hidden = true; }, 240); }
   },
-  refresh() { if (this.isOpen) this.render(); },
-  refreshSoon: Util.debounce(() => DevPanel.updateStats(), 400),
-  updateStats() {
-    if (!this.isOpen) return;
-    const st = DataService.dev.stats();
-    const box = $('#dev-panel .dev-stats');
-    if (box) box.innerHTML = this.statsHtml(st);
-    const ff = $('#dev-panel [data-dev="ffwd"]');
-    if (ff) ff.textContent = `⏩ Sofort ausführen (${st.queue})`;
-  },
-  statsHtml(st) {
-    return html`<div class="dev-stat"><span>Nutzer:innen</span><b>${st.users}</b></div><div class="dev-stat"><span>Aktive Ideen gesamt</span><b>${st.ideas}</b></div>
-      <div class="dev-stat"><span>Likes</span><b>${st.likes}</b></div><div class="dev-stat"><span>Matches</span><b>${st.matches}</b></div>
-      <div class="dev-stat"><span>Nachrichten</span><b>${st.messages}</b></div><div class="dev-stat"><span>Geplante Bot-Reaktionen</span><b>${st.queue}</b></div>
-      <div class="dev-stat"><span>Speicher</span><b>${DataService.storageMode}</b></div>`;
-  },
+  refresh() { if (this.enabled && this.isOpen) this.render(); },
   render() {
     const panel = $('#dev-panel');
     const me = App.user;
     const accounts = DataService.dev.testAccounts();
-    const s = DataService.dev.getSettings();
-    const st = DataService.dev.stats();
-    const mock = DataService.dev.mode === 'mock';
-    panel.innerHTML = html`<div class="dev-head">${icon('gear', 20)}<h3>Entwickler-Panel</h3>
-        <button type="button" class="icon-btn" data-dev="close" aria-label="Schließen">${icon('close', 20)}</button></div>
+    panel.innerHTML = html`<div class="dev-head">${icon('gear', 20)}<h3>${t('dev.title')}</h3>
+        <button type="button" class="icon-btn" data-dev="close" aria-label="${t('dev.close')}">${icon('close', 20)}</button></div>
       <div class="dev-body">
-        <div class="dev-section"><h4>Aktuell eingeloggt</h4>
-          ${me ? html`<div class="dev-current">${UI.avatar(me, 38)}<div style="min-width:0;flex:1"><div class="n">${me.name || '(im Onboarding)'}${me.isBot ? html`<span class="dev-badge">simuliert</span>` : ''}</div><div class="e">${me.email}</div></div>
-            <button type="button" class="btn btn-sm dev-btn" data-dev="logout">Abmelden</button></div>` : html`<div class="dev-note" style="margin:0">Niemand eingeloggt.</div>`}</div>
-        <div class="dev-section"><h4>${t('dev.backend')}</h4><div class="dev-note" style="margin:0"><b>${DataService.storageMode}</b>${mock ? '' : html` · ${t('dev.mockOnly')}`}</div></div>
-        <div class="dev-section"><h4>Test-Logins</h4>
-          ${accounts.map(a => html`<div class="dev-account"><div class="grow"><div class="n">${a.name}</div><code>${a.email}</code><code>Passwort: ${a.password}</code></div>
-            <button type="button" class="btn btn-sm dev-btn ${me && me.id === a.id ? 'active' : ''}" data-dev="switch" data-id="${a.id}" ${me && me.id === a.id ? raw('disabled') : ''}>${me && me.id === a.id ? 'Aktiv' : 'Wechseln'}</button></div>`)}
-          <div class="dev-note">${mock ? 'Wechsel ohne Passwort, um beide Seiten eines Likes oder Matches zu testen. Tipp: Ohne „Eingeloggt bleiben“ angemeldet, kannst du in zwei Browser-Tabs gleichzeitig zwei Accounts nutzen.' : t('dev.supabaseLogins')}</div></div>
-        ${mock ? html`<div class="dev-section"><h4>Als beliebige Person einloggen</h4>
-          <div class="dev-row"><select class="select" data-dev-select aria-label="Person auswählen"><option value="">Lade …</option></select>
-            <button type="button" class="btn btn-sm dev-btn" data-dev="switch-select">Wechseln</button></div>
-          <div class="dev-note">Z. B. als Lena einloggen und eine Anfrage von Jonas annehmen – oder schauen, wie dein Like auf der anderen Seite ankommt.</div></div>
-        <div class="dev-section"><h4>Simulation</h4>
-          <div class="dev-row" style="justify-content:space-between;align-items:flex-start;gap:14px"><div><div style="font-weight:700;font-size:14px">Auto-Antworten der Testaccounts</div>
-            <div class="dev-note" style="margin:3px 0 0">Nehmen Likes zu ~50 % nach 3–10 s an, antworten im Chat und bestätigen Termine.</div></div>
-            <label class="switch"><input type="checkbox" data-dev="auto" ${s.autoReplies ? raw('checked') : ''} aria-label="Auto-Antworten"><span class="track"></span></label></div>
-          <div class="dev-row" style="margin-top:12px;flex-wrap:wrap">
-            <button type="button" class="btn btn-sm dev-btn" data-dev="sim-like" ${me ? '' : raw('disabled')}>❤️ Anfrage simulieren</button>
-            <button type="button" class="btn btn-sm dev-btn" data-dev="ffwd">⏩ Sofort ausführen (${st.queue})</button></div></div>` : ''}
+        <div class="dev-section"><h4>${t('dev.current')}</h4>
+          ${me ? html`<div class="dev-current">${UI.avatar(me, 38)}<div style="min-width:0;flex:1"><div class="n">${me.name || t('dev.inOnboarding')}</div><div class="e">${me.email}</div></div>
+            <button type="button" class="btn btn-sm dev-btn" data-dev="logout">${t('dev.logout')}</button></div>` : html`<div class="dev-note" style="margin:0">${t('dev.nobody')}</div>`}</div>
+        <div class="dev-section"><h4>${t('dev.testLogins')}</h4>
+          ${accounts.map(a => html`<div class="dev-account"><div class="grow"><div class="n">${a.name}</div><code>${a.email}</code><code>${t('dev.password')}: ${a.password}</code></div>
+            <button type="button" class="btn btn-sm dev-btn ${me && me.id === a.id ? 'active' : ''}" data-dev="switch" data-id="${a.id}" ${me && me.id === a.id ? raw('disabled') : ''}>${me && me.id === a.id ? t('dev.active') : t('dev.switch')}</button></div>`)}
+          <div class="dev-note">${t('dev.testLoginsNote')}</div></div>
         <div class="dev-section"><h4>${t('dev.supabase.title')}</h4>
           <button type="button" class="btn btn-sm dev-btn btn-block" data-dev="check-supabase">🔌 ${t('dev.supabase.check')}</button>
           <div class="dev-note">${t('dev.supabase.note')}</div></div>
-        ${mock ? html`<div class="dev-section"><h4>Daten</h4><div class="dev-stats">${this.statsHtml(st)}</div>
-          ${this.confirmReset ? html`<div class="dev-note" style="color:#FFB4B4">Wirklich alles zurücksetzen? Registrierte Konten, Likes und Chats gehen verloren.</div>
-            <div class="dev-row" style="margin-top:8px"><button type="button" class="btn btn-sm btn-danger" style="flex:1" data-dev="reset-yes">Ja, zurücksetzen</button><button type="button" class="btn btn-sm dev-btn" data-dev="reset-no">Abbrechen</button></div>`
-            : html`<button type="button" class="btn btn-sm btn-danger btn-block" style="margin-top:12px" data-dev="reset">${icon('refresh', 16)} Alle Daten zurücksetzen</button>`}
-        </div>` : ''}
       </div>`;
-    this.fillUsers();
-  },
-  async fillUsers() {
-    const select = $('#dev-panel [data-dev-select]');
-    if (!select) return;
-    try {
-      const users = await DataService.dev.listUsers();
-      if (!select.isConnected) return;
-      const group = (label, list) => list.length ? html`<optgroup label="${label}">${list.map(u => html`<option value="${u.id}">${u.name}${u.age ? ', ' + u.age : ''} · ${GENDER[u.gender] ? GENDER[u.gender].label : '–'} · ${shortCity(u.city) || 'ohne Stadt'}</option>`)}</optgroup>` : '';
-      select.innerHTML = html`<option value="">Person wählen …</option>
-        ${group('Login-Testaccounts', users.filter(u => u.isTestAccount))}
-        ${group('Simulierte Personen', users.filter(u => u.isBot))}
-        ${group('Registrierte Konten', users.filter(u => !u.isBot && !u.isTestAccount))}`;
-      if (this.selectedUser) select.value = this.selectedUser;
-    } catch (e) { select.innerHTML = '<option value="">Fehler beim Laden</option>'; }
   },
   async switchTo(userId, btn) {
-    if (!userId) { UI.toast({ icon: '👆', title: 'Bitte zuerst eine Person wählen', light: true, duration: 1800 }); return; }
     UI.busy(btn, true);
     try {
       const u = await DataService.dev.switchUser(userId);
-      UI.toast({ icon: '🔄', title: `Eingeloggt als ${u.name || u.email}`, light: true, duration: 2200 });
+      UI.toast({ icon: '🔄', title: t('dev.switched', { name: u.name || u.email }), light: true, duration: 2200 });
       if (window.matchMedia('(max-width: 520px)').matches) this.toggle(false);
     } catch (err) { UI.handleError(err); }
     UI.busy(btn, false);
@@ -351,38 +294,15 @@ const DevPanel = {
     UI.toast({ icon: '❌', title: t('dev.supabase.failed'), text: t('dev.supabase.failedText', { status: r.status || t('dev.supabase.noResponse') }), light: true, duration: 4200 });
   },
   async onClick(e) {
-    const t = e.target.closest('[data-dev]');
-    if (!t || t.disabled || UI.isBusy(t)) return;
-    switch (t.dataset.dev) {
+    const btn = e.target.closest('[data-dev]');
+    if (!btn || btn.disabled || UI.isBusy(btn)) return;
+    switch (btn.dataset.dev) {
       case 'close': return this.toggle(false);
-      case 'switch': return this.switchTo(t.dataset.id, t);
-      case 'switch-select': return this.switchTo($('#dev-panel [data-dev-select]').value, t);
+      case 'switch': return this.switchTo(btn.dataset.id, btn);
+      case 'check-supabase': return this.checkSupabase(btn);
       case 'logout':
-        UI.busy(t, true);
+        UI.busy(btn, true);
         try { await DataService.logout(); } catch (err) { UI.handleError(err); }
-        return;
-      case 'sim-like':
-        UI.busy(t, true);
-        try { await DataService.dev.simulateIncomingLike(); } catch (err) { UI.handleError(err); }
-        UI.busy(t, false);
-        return;
-      case 'ffwd': {
-        const n = DataService.dev.fastForward();
-        UI.toast({ icon: '⏩', title: n ? `${n} geplante Reaktion${n === 1 ? '' : 'en'} ausgeführt` : 'Keine geplanten Reaktionen', text: DataService.dev.getSettings().autoReplies ? '' : 'Hinweis: Auto-Antworten sind ausgeschaltet.', light: true, duration: 2200 });
-        this.updateStats();
-        return;
-      }
-      case 'check-supabase': return this.checkSupabase(t);
-      case 'reset': this.confirmReset = true; return this.render();
-      case 'reset-no': this.confirmReset = false; return this.render();
-      case 'reset-yes':
-        UI.busy(t, true);
-        try {
-          await DataService.dev.resetAll();
-          this.confirmReset = false;
-          UI.toast({ icon: '♻️', title: 'Alle Daten zurückgesetzt', text: 'Test-Logins: test1@datedate.app / test2@datedate.app', light: true, duration: 3200 });
-          this.render();
-        } catch (err) { UI.busy(t, false); UI.handleError(err); }
         return;
     }
   },

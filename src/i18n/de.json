@@ -12,10 +12,9 @@
     "register": "Konto erstellen",
     "rememberMe": "Eingeloggt bleiben",
     "wrongCredentials": "E-Mail oder Passwort ist falsch.",
-    "registerNote": {
-      "mock": "Prototyp: Bitte keine echten Passwörter verwenden. Alle Daten bleiben lokal in deinem Browser.",
-      "supabase": "Entwicklungsversion: Deine Daten werden auf dem asap-Server in Frankfurt (Supabase) gespeichert."
-    }
+    "registerNote": "Entwicklungsversion: Deine Daten werden auf dem asap-Server in Frankfurt (Supabase) gespeichert.",
+    "testLogin": "Test-Login:",
+    "fill": "Ausfüllen"
   },
   "feed": {
     "like": "Dabei!",
@@ -34,9 +33,18 @@
       "notConfigured": "Supabase nicht eingerichtet",
       "notConfiguredText": ".env aus .env.example anlegen und den Dev-Server neu starten."
     },
-    "backend": "Aktives Backend",
-    "mockOnly": "Nur im Mock-Backend verfügbar. Testdaten in Supabase neu anlegen: npm run db:seed",
-    "supabaseLogins": "Wechsel meldet dich mit dem Test-Passwort an. Für zwei Accounts gleichzeitig: zweites Browserfenster (privat) nutzen."
+    "title": "Entwickler-Panel",
+    "close": "Schließen",
+    "current": "Aktuell eingeloggt",
+    "inOnboarding": "(im Onboarding)",
+    "logout": "Abmelden",
+    "nobody": "Niemand eingeloggt.",
+    "testLogins": "Test-Logins",
+    "password": "Passwort",
+    "active": "Aktiv",
+    "switch": "Wechseln",
+    "switched": "Eingeloggt als {name}",
+    "testLoginsNote": "„Wechseln“ meldet dich in diesem Fenster als die Person an. Für zwei Konten gleichzeitig: zweites, privates Browserfenster. Testdaten zurücksetzen: npm run db:seed"
   },
   "errors": {
     "UNAUTHORIZED": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
@@ -121,9 +129,6 @@
   },
   "profile": {
     "version": "asap · Entwicklungsversion",
-    "storage": {
-      "mock": "Alle Daten liegen lokal in deinem Browser ({mode}).",
-      "supabase": "Deine Daten liegen auf dem asap-Server (Supabase, Frankfurt)."
-    }
+    "storage": "Deine Daten liegen auf dem asap-Server (Supabase, Frankfurt)."
   }
 }

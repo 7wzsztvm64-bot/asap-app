@@ -1,9 +1,10 @@
-import { Util, hashPassword } from './core.js';
+import { Util } from './core.js';
 
 /* =============================================================================
-   3) TESTDATEN (SEED)
-   20 simulierte Nutzer:innen aus dem Raum Frankfurt + 2 Login-Testaccounts.
-   Alle Konten haben das Passwort „Test1234“.
+   TESTDATEN (SEED) – nur für Entwicklung & Tests, NICHT im Produktionsbuild
+   20 Testpersonen aus dem Raum Frankfurt + 2 Login-Testkonten, alle mit Passwort „Test1234“.
+   In Supabase anlegen: npm run db:seed (scripts/db.mjs). Die App nutzt nur TEST_ACCOUNTS
+   für das Entwickler-Panel (nur mit npm run dev).
    ============================================================================= */
 const TEST_PASSWORD = 'Test1234';
 const TEST_ACCOUNTS = [
@@ -47,7 +48,7 @@ const SEED_PEOPLE = [
         'Sonntagsspaziergang durch den Stadtwald, oben auf dem Goetheturm die Skyline bestaunen und auf dem Rückweg ein Eis.'),
     ] },
 
-  /* ---------- Simulierte Nutzer:innen (reagieren automatisch) ---------- */
+  /* ---------- Weitere Testpersonen (antworten nicht automatisch) ---------- */
   { id: 'u_lena', name: 'Lena', age: 27, gender: 'frau', interestedIn: ['mann'], city: 'Frankfurt-Nordend',
     bio: 'UX-Designerin, Kaffeesnob und Samstags-Flohmarkt-Gängerin. Ich finde, die besten Gespräche passieren beim Spazierengehen.',
     interests: ['Kaffee', 'Design', 'Flohmärkte', 'Fotografie', 'Brunch'],
@@ -284,7 +285,7 @@ function upcomingSaturday(hh, mm) {
 }
 
 /** Baut die komplette Ausgangsdatenbank (wird beim ersten Start und beim Reset genutzt). */
-async function buildSeedDB() {
+function buildSeedDB() {
   const now = Date.now();
   const M = 60000, H = 3600000, D = 86400000;
   const users = [];
@@ -295,7 +296,6 @@ async function buildSeedDB() {
     users.push({
       id: p.id,
       email,
-      passwordHash: await hashPassword(email, TEST_PASSWORD),
       name: p.name,
       birthdate: birthdateForAge(p.age, seed),
       gender: p.gender,
@@ -305,12 +305,6 @@ async function buildSeedDB() {
       photos: p.photos.map((ph, i) => ({ id: `${p.id}_ph${i}`, colors: [ph[0], ph[1]], emoji: ph[2], pattern: ph[3] })),
       interests: p.interests,
       createdAt: now - (25 + (seed % 140)) * D,
-      // Zusatzfelder für den Prototyp:
-      isBot: !p.isTest,                // simulierte Person, reagiert automatisch
-      isTestAccount: !!p.isTest,       // vorgefertigter Login-Account
-      profileComplete: true,
-      onboardingStep: 99,
-      botLikesSeeded: true,
     });
     p.ideas.forEach((idea, idx) => {
       ideas.push({
@@ -369,15 +363,7 @@ async function buildSeedDB() {
       createdAt: now - 2 * D + H + 2 * M, respondedAt: now - 2 * D + 2 * H },
   ];
 
-  return {
-    version: 1,
-    seededAt: now,
-    users, ideas, likes, matches, messages, proposals,
-    passes: [],
-    sessions: [],
-    botQueue: [],      // geplante Reaktionen der simulierten Nutzer:innen
-    botMemory: {},     // zuletzt genutzte Antwortvorlagen je Match (für Abwechslung)
-  };
+  return { users, ideas, likes, matches, messages, proposals };
 }
 
 export { TEST_PASSWORD, TEST_ACCOUNTS, seedUuid, I, SEED_PEOPLE, birthdateForAge, upcomingSaturday, buildSeedDB };

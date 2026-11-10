@@ -5,7 +5,7 @@ import { DataService } from './js/dataService.js';
 import { App, UI } from './js/uiCore.js';
 import { PWA } from './js/pwa.js';
 
-// Zum Debuggen in der Browser-Konsole (nur im Entwicklungsmodus): asap.DataService.dev.stats()
+// Zum Debuggen in der Browser-Konsole (nur im Entwicklungsmodus): z. B. await asap.DataService.getMatches()
 if (import.meta.env.DEV) window.asap = { App, DataService };
 
 if (import.meta.env.PROD) PWA.setup();

@@ -6,6 +6,7 @@
      npm run db:migrate              – alle noch fehlenden Dateien aus supabase/migrations/ einspielen
      npm run db:query -- "select 1"  – einzelne SQL-Abfrage, Ergebnis als Tabelle
      npm run db:seed                 – Testpersonen (@datedate.app, Passwort Test1234) neu anlegen
+     npm run db:auth                 – Auth-Einstellungen aus supabase/auth/ (+ SMTP aus .env) übernehmen
 
    Welche Migrationen schon drin sind, steht wie bei der Supabase CLI in
    supabase_migrations.schema_migrations – ein späterer Wechsel zur CLI bleibt also möglich. */
@@ -23,6 +24,15 @@ if (!token || !projectRef) {
   process.exit(1);
 }
 
+// Erinnerung: Der Access Token läuft ab (Datum in .env: SUPABASE_ACCESS_TOKEN_EXPIRES=JJJJ-MM-TT)
+const TOKEN_HELP = 'Neuen Token unter https://supabase.com/dashboard/account/tokens erstellen (30 Tage) und in .env '
+  + 'SUPABASE_ACCESS_TOKEN sowie SUPABASE_ACCESS_TOKEN_EXPIRES aktualisieren.';
+const expires = process.env.SUPABASE_ACCESS_TOKEN_EXPIRES;
+if (expires) {
+  const daysLeft = Math.ceil((new Date(expires + 'T23:59:59') - Date.now()) / 86400000);
+  if (daysLeft <= 7) console.warn(`⚠️  Der Supabase Access Token läuft ${daysLeft > 0 ? `in ${daysLeft} Tag(en)` : 'heute oder ist schon'} ab (${expires}). ${TOKEN_HELP}\n`);
+}
+
 async function query(sql) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
     method: 'POST',
@@ -30,6 +40,7 @@ async function query(sql) {
     body: JSON.stringify({ query: sql }),
   });
   const body = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error(`Der Access Token ist ungültig oder abgelaufen. ${TOKEN_HELP}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.message || JSON.stringify(body)}`);
   return body;
 }
@@ -104,12 +115,39 @@ async function seed() {
     `${data.matches.length} Matches, ${data.messages.length} Nachrichten, ${data.proposals.length} Termin(e)`);
 }
 
+/* Auth-Einstellungen aus supabase/auth/ übernehmen (Weiterleitungen, Passwortlänge, deutsche Mail-Vorlage).
+   Sind SMTP_* in .env gesetzt, wird zusätzlich der eigene Mailversand (z. B. Brevo) eingetragen. */
+async function applyAuthConfig() {
+  const dir = join(import.meta.dirname, '..', 'supabase', 'auth');
+  const config = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8'));
+  config.mailer_templates_confirmation_content = readFileSync(join(dir, 'confirmation.html'), 'utf8');
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SENDER_EMAIL } = process.env;
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS && SMTP_SENDER_EMAIL) {
+    Object.assign(config, { smtp_host: SMTP_HOST, smtp_port: String(SMTP_PORT || 587), smtp_user: SMTP_USER, smtp_pass: SMTP_PASS,
+      smtp_admin_email: SMTP_SENDER_EMAIL, smtp_sender_name: 'asap', rate_limit_email_sent: 30 });
+  } else {
+    // Eigene Mail-Vorlagen erlaubt Supabase (Free) erst mit eigenem Mailversand
+    for (const key of Object.keys(config)) if (key.startsWith('mailer_subjects_') || key.startsWith('mailer_templates_')) delete config[key];
+  }
+  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error(`Der Access Token ist ungültig oder abgelaufen. ${TOKEN_HELP}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.message || JSON.stringify(body)}`);
+  console.log(`✔ Auth-Einstellungen übernommen (Weiterleitung ${body.site_url}, Passwort ≥ ${body.password_min_length} Zeichen, `
+    + `Mailversand: ${body.smtp_host ? `${body.smtp_host} als ${body.smtp_admin_email}` : 'Supabase-Standard (nur Team-Adressen, 2/Std.)'})`);
+}
+
 const [command, sql] = process.argv.slice(2);
 try {
   if (command === 'migrate') await migrate();
   else if (command === 'seed') await seed();
+  else if (command === 'auth') await applyAuthConfig();
   else if (command === 'query' && sql) console.table(await query(sql));
-  else { console.error('Aufruf: npm run db:migrate  |  npm run db:seed  |  npm run db:query -- "SQL"'); process.exit(1); }
+  else { console.error('Aufruf: npm run db:migrate  |  npm run db:seed  |  npm run db:auth  |  npm run db:query -- "SQL"'); process.exit(1); }
 } catch (e) {
   console.error('✖', e.message);
   process.exit(1);
