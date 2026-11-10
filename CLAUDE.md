@@ -56,6 +56,22 @@
 8. **Keine neuen Abhängigkeiten** ohne kurze Begründung und Rückfrage.
 9. **Commits** auf Deutsch, kurz und beschreibend; nie direkt `.env` oder Schlüssel committen.
 
-## Aktueller Stand
-- Phase 0 erledigt. Phase 1: #1–#3 und #5–#11 erledigt (App komplett DE/EN). Phase 2: #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #19 Missbrauchsschutz erledigt; #17 Passwort vergessen gebaut (Mail-Rundweg wartet auf Brevo); #18 Foto-Upload offen (braucht Entscheidungen). Offen in Phase 1: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
+## Arbeitsweise mit Noah (verbindlich)
+1. **So weit arbeiten, wie es ohne Noah geht** – selbst ausführen (Migrationen, Seeds, Tests, Commits auf `main` + push, Issues schließen) und nach Best Practice entscheiden.
+2. **Entscheidungen, die Noah treffen muss** (neue Abhängigkeiten, Kosten, Rechtliches, Produktfragen, Irreversibles): als **interaktive Auswahl** (AskUserQuestion), **eine Frage nach der anderen**, Empfehlung als erste Option.
+3. **Aufgaben, die Noah selbst erledigen muss** (Konten anlegen, Dashboards, Handys): **nacheinander**, jeweils mit genauen Angaben (wo klicken, was eintragen) – die nächste erst, wenn die vorige erledigt ist.
+4. Zum Testen im Browser: `playwright-core` im Scratchpad (nicht im Projekt) mit dem installierten Chrome (`channel: 'chrome'`), zwei getrennte Browser-Kontexte für zwei Personen; danach `npm run db:seed`.
+
+## Aktueller Stand (10.11.2026)
+- **Phase 0 und 1** erledigt bis auf #4 (Bestätigungs-Mail – wartet auf Brevo) und #12 (Abnahmetest mit zwei Handys, Checkliste `docs/ABNAHMETEST.md`). App komplett DE/EN (#11).
+- **Phase 2:** erledigt #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #19 Missbrauchsschutz. #17 Passwort vergessen gebaut, Mail-Rundweg wartet auf Brevo. #18 Foto-Upload offen.
+- 35 DB-Tests (`npm run test:db`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.
+
+## Nächste Schritte (beim Start einer neuen Sitzung)
+Zuerst die offenen Entscheidungen **nacheinander** als Auswahl stellen, dann Noahs Aufgaben **nacheinander** geben, parallel alles Übrige selbst erledigen:
+- **Entscheidung 1 – #18 Foto-Prüfung:** manuell durch Noah im Dashboard vor der Freischaltung (Empfehlung für die Beta: kostenlos, rechtlich am sichersten) oder automatischer Prüfdienst (kostet, braucht AV-Vertrag).
+- **Entscheidung 2 – Browser-Tests im Repo:** `playwright-core` als devDependency + `npm run test:e2e` mit dem Zwei-Personen-Ablauf (Empfehlung: ja, ~8 MB, nutzt Chrome).
+- **Aufgabe A – Brevo einrichten** (danach #4 und #17 abschließen): Konto auf brevo.com → Senders: Absender „asap“ mit privater Adresse bestätigen → SMTP & API → SMTP-Schlüssel erzeugen → in `.env`: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SENDER_EMAIL` → dann `npm run db:auth` und Registrierung + Passwort vergessen mit Noahs Adresse testen.
+- **Aufgabe B – #12 Handy-Test** nach `docs/ABNAHMETEST.md` (Variante A geht sofort, B nach Brevo).
+- Danach: #18 umsetzen, dann Phase 3 (Web-Beta: Hosting, eigenes Produktions-Supabase-Projekt, siehe „Für später vermerkt“ in `docs/ROADMAP.md`).
