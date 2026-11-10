@@ -661,6 +661,15 @@ const DataService = (() => {
         return true;
       });
     },
+    /** Person melden (Grund: fake, inappropriate, harassment, spam, scam, underage, other) – blockiert standardmäßig mit. */
+    reportUser({ userId, reason, details = '', ideaId = null, matchId = null, block = true }) {
+      return request('rpc.report_user', async () => {
+        if (!reason) throw validationError({ reason: t('safety.reasonMissing') });
+        await rpc('report_user', { p_user_id: userId, p_reason: reason, p_details: details || null, p_idea_id: ideaId, p_match_id: matchId, p_block: !!block });
+        if (block) changed('block');
+        return true;
+      });
+    },
     getBlockedUsers() {
       return request('rpc.get_blocked_users', async () => {
         const rows = await rpc('get_blocked_users');

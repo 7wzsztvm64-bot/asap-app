@@ -605,7 +605,28 @@
     "blockTitle": "Block {name}?",
     "blockText": "Profile, ideas and your chat disappear for both of you. You can undo this in your profile under “Blocked people”.",
     "blockConfirm": "Block",
-    "blocked": "{name} is blocked"
+    "blocked": "{name} is blocked",
+    "report": "Report {name}",
+    "reportTitle": "Report {name}",
+    "reportSub": "Your report is confidential – {name} won't know who reported.",
+    "reason": "What happened?",
+    "reasons": {
+      "fake": "Fake profile",
+      "inappropriate": "Inappropriate content",
+      "harassment": "Harassment",
+      "spam": "Spam or advertising",
+      "scam": "Scam",
+      "underage": "Seems underage",
+      "other": "Something else"
+    },
+    "details": "What should we know?",
+    "detailsPlaceholder": "Briefly describe what happened.",
+    "alsoBlock": "Also block {name}",
+    "reportHint": "We review every report. If you are in immediate danger, please contact the police (110 in Germany).",
+    "send": "Send report",
+    "reasonMissing": "Please choose a reason.",
+    "thanks": "Thanks for your report",
+    "thanksBlocked": "{name} has also been blocked."
   },
   "blocked": {
     "title": "Blocked people",

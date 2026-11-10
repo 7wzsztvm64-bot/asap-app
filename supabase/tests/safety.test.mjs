@@ -79,3 +79,39 @@ test('Liste „Blockierte Personen“: nur die eigenen, mit Namen', async () => 
   await t.as(MIA);
   await t.db.query(`delete from public.blocks where blocker_id = $1`, [MIA]);
 });
+
+/* ---------- #14 Melden ---------- */
+test('Melden: speichert Grund und blockiert gleich mit', async () => {
+  await t.as(JONAS);
+  await t.db.query(`select public.report_user($1, 'harassment', 'Schreibt unangenehme Dinge', null, $2, true)`, [MIA, MATCH]);
+  assert.equal((await t.rows(`select * from public.reports`)).length, 0, 'eigene Meldungen sind nicht lesbar');
+  assert.equal((await t.rows(`select id from public.matches`)).length, 0, 'nach dem Melden blockiert');
+  await t.asAdmin();
+  const [r] = await t.rows(`select reporter_id, reported_id, reason, details, match_id, status from public.reports`);
+  assert.deepEqual(r, { reporter_id: JONAS, reported_id: MIA, reason: 'harassment', details: 'Schreibt unangenehme Dinge', match_id: MATCH, status: 'open' });
+  const [o] = await t.rows(`select reported_name, reporter_name, reports_against_person from moderation.open_reports`);
+  assert.equal(o.reported_name, 'Mia');
+  assert.equal(Number(o.reports_against_person), 1);
+  await t.db.exec(`delete from public.blocks; delete from public.reports;`);
+});
+
+test('Melden: ungültiger Grund, sich selbst, fremder Kontext und anon werden abgelehnt', async () => {
+  await t.as(JONAS);
+  await assert.rejects(t.db.query(`select public.report_user($1, 'langweilig')`, [MIA]), code('VALIDATION'));
+  await assert.rejects(t.db.query(`select public.report_user($1, 'spam')`, [JONAS]), code('NOT_FOUND'));
+  await assert.rejects(t.db.query(`select public.report_user($1, 'spam', null, $2)`, [MIA, I_LENA]), code('NOT_FOUND'));
+  await assert.rejects(t.db.query(`select public.report_user($1, 'spam', null, null, $2)`, [LENA, MATCH]), code('NOT_FOUND'));
+  await t.asAnon();
+  await assert.rejects(t.db.query(`select public.report_user($1, 'spam')`, [MIA]), DENIED);
+  await assert.rejects(t.db.query(`select * from moderation.open_reports`), DENIED);
+  await t.as(JONAS);
+  await assert.rejects(t.db.query(`select * from moderation.open_reports`), DENIED);
+});
+
+test('Melden: höchstens 10 Meldungen pro Tag', async () => {
+  await t.as(LENA);
+  for (let i = 0; i < 10; i++) await t.db.query(`select public.report_user($1, 'spam', null, null, null, false)`, [i % 2 ? JONAS : MIA]);
+  await assert.rejects(t.db.query(`select public.report_user($1, 'spam', null, null, null, false)`, [MIA]), code('RATE_LIMIT'));
+  await t.asAdmin();
+  await t.db.query(`delete from public.reports`);
+});

@@ -257,6 +257,7 @@ const SafetyMenu = {
     UI.sheet({
       title: user.name, subtitle: t('safety.subtitle'),
       body: html`<div class="settings-list">
+        <button type="button" class="si" data-safety="report">${icon('flag', 20)}<span class="grow">${t('safety.report', { name: user.name })}</span>${icon('chevronRight', 18)}</button>
         <button type="button" class="si danger" data-safety="block">${icon('ban', 20)}<span class="grow">${t('safety.block', { name: user.name })}</span></button>
       </div><p class="hint" style="margin-top:12px">${t('safety.blockHint')}</p>`,
       onMount(sheet, close) {
@@ -265,6 +266,41 @@ const SafetyMenu = {
           if (!b) return;
           close();
           if (b.dataset.safety === 'block') SafetyMenu.block(user, fallback);
+          if (b.dataset.safety === 'report') SafetyMenu.report(user, context, fallback);
+        });
+      },
+    });
+  },
+  report(user, context, fallback) {
+    const reasons = ['fake', 'inappropriate', 'harassment', 'spam', 'scam', 'underage', 'other'];
+    const st = { reason: '' };
+    UI.sheet({
+      title: t('safety.reportTitle', { name: user.name }), subtitle: t('safety.reportSub', { name: user.name }),
+      body: html`<div class="field" data-field="reason"><span class="label">${t('safety.reason')}</span>
+          <div class="chips">${reasons.map(r => html`<button type="button" class="chip" data-reason="${r}" aria-pressed="false">${t('safety.reasons.' + r)}</button>`)}</div></div>
+        <div class="field"><label class="label" for="rep-details">${t('safety.details')} <span class="count">${t('ideaForm.optional')}</span></label>
+          <textarea id="rep-details" class="textarea" maxlength="1000" placeholder="${t('safety.detailsPlaceholder')}"></textarea></div>
+        <label class="check"><input type="checkbox" name="block" checked><span class="box">${icon('check', 14, 3)}</span>${t('safety.alsoBlock', { name: user.name })}</label>
+        <p class="hint" style="margin-top:10px">${t('safety.reportHint')}</p>`,
+      foot: html`<button type="button" class="btn btn-secondary" data-close>${t('common.cancel')}</button><button type="button" class="btn btn-danger" style="flex:1" data-send>${icon('flag', 17)} ${t('safety.send')}</button>`,
+      onMount(sheet, close) {
+        sheet.addEventListener('click', async e => {
+          const r = e.target.closest('[data-reason]');
+          if (r) {
+            st.reason = r.dataset.reason;
+            $$('[data-reason]', sheet).forEach(x => { x.classList.toggle('is-on', x === r); x.setAttribute('aria-pressed', x === r); });
+            UI.clearErrors(sheet);
+          }
+          const send = e.target.closest('[data-send]');
+          if (!send || UI.isBusy(send)) return;
+          const block = $('input[name="block"]', sheet).checked;
+          UI.busy(send, true);
+          try {
+            await DataService.reportUser({ userId: user.id, reason: st.reason, details: $('#rep-details', sheet).value, ideaId: context.ideaId || null, matchId: context.matchId || null, block });
+            close();
+            UI.toast({ icon: '🛡️', title: t('safety.thanks'), text: block ? t('safety.thanksBlocked', { name: user.name }) : '', light: true, duration: 3200 });
+            if (block) App.go(fallback, { replace: true });
+          } catch (err) { UI.busy(send, false); UI.handleError(err, $('.sheet-body', sheet)); }
         });
       },
     });
