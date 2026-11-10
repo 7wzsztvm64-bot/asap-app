@@ -1,4 +1,5 @@
 import { icon } from './core.js';
+import { t, getLang } from '../i18n/index.js';
 
 /* =============================================================================
    PWA: App-Icon, Manifest & Offline-Cache (nur wenn über eine Web-Adresse geladen,
@@ -41,7 +42,7 @@ const PWA = {
       const big = PWA.icon(512);
       const base = location.href.split('#')[0];
       const manifest = {
-        name: 'asap – Erst die Idee, dann das Date', short_name: 'asap', lang: 'de',
+        name: t('page.title'), short_name: 'asap', lang: getLang(),
         start_url: base, scope: base.replace(/[^/]*$/, ''), display: 'standalone', orientation: 'portrait',
         background_color: '#FFF7EF', theme_color: '#FFF7EF',
         icons: big ? [{ src: big, sizes: '512x512', type: 'image/png', purpose: 'any' }] : [],

@@ -1,13 +1,13 @@
-import { Util, escapeHtml, raw, html, Fmt, icon, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIME, ApiError } from './core.js';
+import { Util, escapeHtml, raw, html, Fmt, icon, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIME, Label, ApiError } from './core.js';
 import { DataService } from './dataService.js';
 import { LoginView, RegisterView, OnboardingView } from './viewsAuth.js';
 import { FeedView, RequestsView, UserProfileView } from './viewsFeed.js';
 import { ChatsView, ChatView, DatesView } from './viewsChat.js';
 import { ProfileView, ProfileEditView, IdeaEditView, DevPanel } from './viewsProfile.js';
 
-import { t } from '../i18n/index.js';
+import { t, t as i18n, onLangChange } from '../i18n/index.js'; // i18n: wo „t“ als Schleifenvariable belegt ist
 /* =============================================================================
-   5) UI – Komponenten, Overlays, Router
+   UI – Komponenten, Overlays, Router
    Die UI spricht ausschließlich mit dem DataService (nie mit localStorage).
    ============================================================================= */
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -46,11 +46,11 @@ const UI = {
   },
   metaChips(idea) {
     const b = BUDGETS.find(x => x.value === idea.budget);
-    const t = TIME[idea.timeOfDay];
+    const time = TIME[idea.timeOfDay];
     return html`<div class="icard-meta">
       <span class="meta-chip budget" title="${b ? b.hint : ''}">${idea.budget}</span>
-      <span class="meta-chip">${icon('clock', 14)} ${idea.duration}</span>
-      <span class="meta-chip">${t ? t.emoji : ''} ${idea.timeOfDay}</span>
+      <span class="meta-chip">${icon('clock', 14)} ${Label.duration(idea.duration)}</span>
+      <span class="meta-chip">${time ? time.emoji : ''} ${Label.time(idea.timeOfDay)}</span>
     </div>`;
   },
   /** Die Date-Idee ist das Hauptelement – die Person steht darunter. */
@@ -59,27 +59,27 @@ const UI = {
     const cat = CAT[idea.category] || CATEGORIES[0];
     const cls = variant === 'swipe' ? `icard ${posClass}` : variant === 'compact' ? 'icard compact' : 'icard preview';
     const shared = owner && owner.sharedInterests ? owner.sharedInterests.length : 0;
-    return html`<article class="${cls}" data-idea="${idea.id || ''}" style="${catStyle(idea.category)}" aria-label="Date-Idee: ${idea.title}">
+    return html`<article class="${cls}" data-idea="${idea.id || ''}" style="${catStyle(idea.category)}" aria-label="${t('card.ariaIdea', { title: idea.title })}">
       <div class="icard-hero">
         <div class="icard-top">
-          <span class="glass">${cat.emoji} ${cat.label}</span>
+          <span class="glass">${cat.emoji} ${cat.name}</span>
           ${distanceKm != null ? html`<span class="glass">${icon('nav', 13)} ${Fmt.km(distanceKm)}</span>` : ''}
         </div>
         <div class="icard-emoji" aria-hidden="true">${idea.emoji || cat.emoji}</div>
-        ${variant === 'swipe' ? html`<div class="stamp stamp-like" aria-hidden="true">DABEI!</div><div class="stamp stamp-pass" aria-hidden="true">NÄCHSTE</div>` : ''}
-        <div class="icard-kicker">Date-Idee</div>
-        <h2 class="icard-title">${idea.title || 'Dein Titel'}</h2>
+        ${variant === 'swipe' ? html`<div class="stamp stamp-like" aria-hidden="true">${t('card.stampLike')}</div><div class="stamp stamp-pass" aria-hidden="true">${t('card.stampPass')}</div>` : ''}
+        <div class="icard-kicker">${t('card.kicker')}</div>
+        <h2 class="icard-title">${idea.title || t('card.titlePlaceholder')}</h2>
       </div>
       <div class="icard-body">
-        <p class="icard-desc">${idea.description || 'Hier steht deine Beschreibung.'}</p>
+        <p class="icard-desc">${idea.description || t('card.descriptionPlaceholder')}</p>
         ${UI.metaChips(idea)}
-        <div class="icard-loc">${icon('pin', 16)}<span>${idea.location || 'Treffpunkt'}</span></div>
+        <div class="icard-loc">${icon('pin', 16)}<span>${idea.location || t('card.locationPlaceholder')}</span></div>
         ${footer || ''}
       </div>
-      ${owner && showOwner ? html`<button class="icard-person" type="button" data-go="#/user/${owner.id}" aria-label="Profil von ${owner.name} ansehen">
+      ${owner && showOwner ? html`<button class="icard-person" type="button" data-go="#/user/${owner.id}" aria-label="${t('card.ariaProfile', { name: owner.name })}">
         ${UI.avatar(owner, 40)}
         <span class="pi"><span class="pn">${owner.name}${owner.age ? ', ' + owner.age : ''}</span>
-          <span class="ps">${shortCity(owner.city)}${shared ? ` · ${shared} gemeinsame${shared === 1 ? 's' : ''} Interesse${shared === 1 ? '' : 'n'}` : ''}</span></span>
+          <span class="ps">${shortCity(owner.city)}${shared ? ` · ${t(shared === 1 ? 'card.sharedOne' : 'card.sharedMany', { n: shared })}` : ''}</span></span>
         <span class="more">${icon('chevronRight', 18)}</span>
       </button>` : ''}
     </article>`;
@@ -89,12 +89,12 @@ const UI = {
       ${actions.length ? html`<div class="actions">${actions.map(a => html`<button type="button" class="btn ${a.kind || 'btn-primary'}" ${a.go ? raw(`data-go="${escapeHtml(a.go)}"`) : raw(`data-action="${escapeHtml(a.action)}"`)}>${a.icon ? icon(a.icon, 18) : ''}${a.label}</button>`)}</div>` : ''}</div>`;
   },
   errorState(err) {
-    return UI.empty({ emoji: '⚠️', title: 'Das hat nicht geklappt', text: (err && err.message) || 'Unbekannter Fehler.', actions: [{ label: 'Erneut versuchen', action: 'retry', icon: 'refresh' }] });
+    return UI.empty({ emoji: '⚠️', title: t('common.failedTitle'), text: (err && err.message) || t('common.unknownError'), actions: [{ label: t('common.retry'), action: 'retry', icon: 'refresh' }] });
   },
   skeletonList(n = 3) {
     return html`${Array.from({ length: n }, () => html`<div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-lines"><div class="skeleton sk-line" style="width:55%"></div><div class="skeleton sk-line" style="width:85%"></div></div></div>`)}`;
   },
-  loading() { return html`<div class="loading-center"><div class="spinner" role="status" aria-label="Lädt"></div></div>`; },
+  loading() { return html`<div class="loading-center"><div class="spinner" role="status" aria-label="${t('common.loading')}"></div></div>`; },
 
   /* ---------- Toasts ---------- */
   toast({ icon: ic = '✨', title, text = '', onClick = null, duration = 3800, light = false }) {
@@ -119,7 +119,7 @@ const UI = {
       <div class="sheet" role="dialog" aria-modal="true" aria-label="${title}">
         <div class="sheet-handle"></div>
         <div class="sheet-head"><div style="flex:1;min-width:0"><h3>${title}</h3>${subtitle ? html`<p>${subtitle}</p>` : ''}</div>
-          <button type="button" class="icon-btn" data-close aria-label="Schließen">${icon('close', 20)}</button></div>
+          <button type="button" class="icon-btn" data-close aria-label="${t('common.close')}">${icon('close', 20)}</button></div>
         <div class="sheet-body">${body}</div>
         ${foot ? html`<div class="sheet-foot">${foot}</div>` : ''}
       </div>`;
@@ -143,7 +143,7 @@ const UI = {
   closeOverlays() { $$('#overlay-root > .sheet-layer').forEach(el => el.remove()); },
 
   /* ---------- Bestätigungsdialog (statt window.confirm) ---------- */
-  confirm({ icon: ic = '❓', title, text = '', confirmLabel = 'OK', cancelLabel = 'Abbrechen', danger = false }) {
+  confirm({ icon: ic = '❓', title, text = '', confirmLabel = 'OK', cancelLabel = t('common.cancel'), danger = false }) {
     return new Promise(resolve => {
       const layer = document.createElement('div');
       layer.className = 'sheet-layer';
@@ -217,23 +217,23 @@ const UI = {
     if (!(err instanceof ApiError)) console.warn('[UI]', err);
     if (err && err.code === 'UNAUTHORIZED') { App.onUnauthorized(); return; }
     if (root && err && err.fields) { UI.fieldErrors(root, err.fields); return; }
-    if (root) { UI.alert(root, (err && err.message) || 'Unbekannter Fehler.'); return; }
-    UI.toast({ icon: '⚠️', title: 'Das hat nicht geklappt', text: (err && err.message) || 'Bitte versuch es noch einmal.' });
+    if (root) { UI.alert(root, (err && err.message) || t('common.unknownError')); return; }
+    UI.toast({ icon: '⚠️', title: t('common.failedTitle'), text: (err && err.message) || t('common.tryAgain') });
   },
 };
 
 /* ---------- Like-Dialog (optional mit Nachricht, wie bei Hinge) ---------- */
 const LikeSheet = {
   open({ idea, owner, onSend }) {
-    const quick = ['Klingt perfekt! 😍', 'Da wollte ich schon immer mal hin!', 'Ich bring gute Laune mit ☀️', 'Bin dabei – wann passt es dir?'];
+    const quick = [1, 2, 3, 4].map(n => t('likeSheet.quick' + n));
     UI.sheet({
-      title: `Bei ${owner.name} dabei sein?`,
-      subtitle: 'Optional: Schreib eine kurze Nachricht dazu.',
+      title: t('likeSheet.title', { name: owner.name }),
+      subtitle: t('likeSheet.subtitle'),
       body: html`<div class="like-preview">${UI.ideaThumb(idea)}<div style="min-width:0"><span class="t">${idea.title}</span><span class="s">${owner.name}, ${owner.age} · ${shortCity(owner.city)}</span></div></div>
-        <div class="field"><label class="label" for="like-msg">Deine Nachricht <span class="count">0/200</span></label>
-          <textarea id="like-msg" class="textarea" maxlength="200" placeholder="z. B. Da war ich noch nie – zeigst du mir deinen Lieblingsplatz?"></textarea></div>
+        <div class="field"><label class="label" for="like-msg">${t('likeSheet.label')} <span class="count">0/200</span></label>
+          <textarea id="like-msg" class="textarea" maxlength="200" placeholder="${t('likeSheet.placeholder')}"></textarea></div>
         <div class="quick-msgs">${quick.map(q => html`<button type="button" class="chip sm" data-quick="${q}">${q}</button>`)}</div>`,
-      foot: html`<button type="button" class="btn btn-secondary" data-close>Abbrechen</button><button type="button" class="btn btn-primary" style="flex:1" data-send>${icon('heartFill', 18)} Like senden</button>`,
+      foot: html`<button type="button" class="btn btn-secondary" data-close>${t('common.cancel')}</button><button type="button" class="btn btn-primary" style="flex:1" data-send>${icon('heartFill', 18)} ${t('likeSheet.send')}</button>`,
       onMount(sheet, close) {
         const ta = $('textarea', sheet);
         const count = $('.count', sheet);
@@ -275,16 +275,16 @@ const MatchOverlay = {
     el.className = 'match';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
-    el.setAttribute('aria-label', 'Neues Match');
+    el.setAttribute('aria-label', t('match.kicker'));
     el.innerHTML = html`<div class="confetti" aria-hidden="true">${raw(confetti)}</div>
-      <p class="match-kicker">Neues Match</p>
-      <h2 class="match-title">Ihr seid dabei!</h2>
+      <p class="match-kicker">${t('match.kicker')}</p>
+      <h2 class="match-title">${t('match.title')}</h2>
       <div class="match-avatars">${UI.avatar(me, 104, 'left')}<span class="match-heart">${icon('heartFill', 26)}</span>${UI.avatar(p.other, 104, 'right')}</div>
-      <p class="match-text">Du und ${p.other.name} habt einen Plan:</p>
-      <div class="match-idea">${UI.ideaThumb(p.idea)}<div style="min-width:0"><div class="k">Geplantes Date</div><div class="t">${p.idea.title}</div></div></div>
+      <p class="match-text">${t('match.text', { name: p.other.name })}</p>
+      <div class="match-idea">${UI.ideaThumb(p.idea)}<div style="min-width:0"><div class="k">${t('match.plannedDate')}</div><div class="t">${p.idea.title}</div></div></div>
       <div class="match-actions">
-        <button type="button" class="btn btn-light btn-block" data-m="chat">${icon('chat', 19)} Nachricht an ${p.other.name}</button>
-        <button type="button" class="btn btn-outline btn-block" data-m="close">Weiter entdecken</button>
+        <button type="button" class="btn btn-light btn-block" data-m="chat">${icon('chat', 19)} ${t('match.message', { name: p.other.name })}</button>
+        <button type="button" class="btn btn-outline btn-block" data-m="close">${t('match.continue')}</button>
       </div>`;
     const close = () => { el.classList.add('out'); setTimeout(() => { el.remove(); MatchOverlay.next(); }, 300); };
     el.addEventListener('click', e => {
@@ -304,12 +304,22 @@ const MatchOverlay = {
    ROUTER & APP-ZUSTAND
    ============================================================================= */
 const TABS = [
-  { id: 'feed', label: t('tabs.feed'), icon: 'compass', hash: '#/feed' },
-  { id: 'requests', label: t('tabs.requests'), icon: 'heart', hash: '#/requests', badge: 'requests' },
-  { id: 'chats', label: t('tabs.chats'), icon: 'chat', hash: '#/chats', badge: 'chats' },
-  { id: 'dates', label: t('tabs.dates'), icon: 'calendar', hash: '#/dates' },
-  { id: 'profile', label: t('tabs.profile'), icon: 'user', hash: '#/profile' },
-];
+  { id: 'feed', icon: 'compass', hash: '#/feed' },
+  { id: 'requests', icon: 'heart', hash: '#/requests', badge: 'requests' },
+  { id: 'chats', icon: 'chat', hash: '#/chats', badge: 'chats' },
+  { id: 'dates', icon: 'calendar', hash: '#/dates' },
+  { id: 'profile', icon: 'user', hash: '#/profile' },
+].map(tab => ({ ...tab, get label() { return t('tabs.' + tab.id); } })); // Name erst beim Zeichnen übersetzen
+
+/** Statische Texte aus index.html übersetzen (data-i18n = Text, data-i18n-html = Text mit eigener Formatierung aus de/en.json). */
+function translateStatic() {
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); }); // nur eigene Übersetzungen, keine Nutzerdaten
+  $$('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
+  document.title = t('page.title');
+  const desc = $('meta[name="description"]');
+  if (desc) desc.setAttribute('content', t('page.description'));
+}
 
 function makeCtx(route, params) {
   const ctx = {
@@ -371,7 +381,7 @@ const App = {
   },
   onUnauthorized() {
     this.user = null;
-    UI.toast({ icon: '🔒', title: 'Bitte melde dich erneut an' });
+    UI.toast({ icon: '🔒', title: t('app.loginAgain') });
     this.stack = [];
     this.go('#/login', { replace: true });
   },
@@ -433,7 +443,7 @@ const App = {
       if (token !== this.navToken || !ctx.alive) return;
       if (err && err.code === 'UNAUTHORIZED') return this.onUnauthorized();
       console.error(err);
-      section.innerHTML = html`<header class="topbar"><button class="icon-btn back" data-action="back" aria-label="Zurück">${icon('back')}</button></header>${UI.errorState(err)}`;
+      section.innerHTML = html`<header class="topbar"><button class="icon-btn back" data-action="back" aria-label="${t('common.back')}">${icon('back')}</button></header>${UI.errorState(err)}`;
       section.addEventListener('click', e => { if (e.target.closest('[data-action="retry"]')) this.navigate({ replace: true, force: true }); });
     }
   },
@@ -445,7 +455,7 @@ const App = {
     bar.classList.remove('hide');
     bar.innerHTML = html`${TABS.map(t => {
       const n = t.badge ? this.badges[t.badge] : 0;
-      return html`<button type="button" class="tab ${t.id === activeTab ? 'active' : ''}" data-go="${t.hash}" data-tab="${t.id}" aria-label="${t.label}${n ? ` (${n} neu)` : ''}" ${t.id === activeTab ? raw('aria-current="page"') : ''}>
+      return html`<button type="button" class="tab ${t.id === activeTab ? 'active' : ''}" data-go="${t.hash}" data-tab="${t.id}" aria-label="${n ? i18n('tabs.ariaNew', { label: t.label, n }) : t.label}" ${t.id === activeTab ? raw('aria-current="page"') : ''}>
         ${icon(t.icon, 24, t.id === activeTab ? 2.3 : 2)}<span>${t.label}</span>${n ? html`<span class="tab-badge">${n > 9 ? '9+' : n}</span>` : ''}</button>`;
     })}`;
   },
@@ -459,7 +469,7 @@ const App = {
       if (!b) { b = document.createElement('span'); b.className = 'tab-badge'; btn.appendChild(b); }
       const txt = n > 9 ? '9+' : String(n);
       if (b.textContent !== txt) b.textContent = txt;
-      btn.setAttribute('aria-label', `${t.label} (${n} neu)`);
+      btn.setAttribute('aria-label', i18n('tabs.ariaNew', { label: t.label, n }));
     });
   },
   refreshBadges: Util.debounce(async () => {
@@ -488,7 +498,16 @@ const App = {
     DevPanel.refresh();
   },
 
+  /** Sprache gewechselt: statische Texte, Tab-Leiste und aktuelle Ansicht neu zeichnen. */
+  applyLang() {
+    translateStatic();
+    if (this.view) { this.view.hash = null; this.navigate({ replace: true, force: true }); }
+    DevPanel.refresh();
+  },
+
   async boot() {
+    translateStatic();
+    onLangChange(() => this.applyLang());
     $('#pitch-logo').innerHTML = html`${logoMark()}<span class="word">asap<i>.</i></span>`;
     const tick = () => { const el = $('#sb-time'); if (el) el.textContent = Fmt.time(Date.now()); };
     tick();
@@ -509,12 +528,12 @@ const App = {
       UI.toast({ icon: '💬', title: d.senderName, text: d.message.text, onClick: () => this.go('#/chat/' + d.matchId) });
     });
     DataService.on('request', d => {
-      UI.toast({ icon: '❤️', title: `${d.fromName} ist dabei!`, text: `… bei deiner Idee „${d.ideaTitle}“`, onClick: () => this.go('#/requests') });
+      UI.toast({ icon: '❤️', title: t('app.requestTitle', { name: d.fromName }), text: t('app.requestText', { title: d.ideaTitle }), onClick: () => this.go('#/requests') });
     });
     DataService.on('proposal', d => {
       if (this.activeChatId === d.matchId) return;
       const ok = d.proposal.status === 'confirmed';
-      UI.toast({ icon: ok ? '🎉' : '🙈', title: ok ? `${d.byName} hat zugesagt!` : `${d.byName} kann leider nicht`, text: Fmt.dateTimeLong(d.proposal.dateTime), onClick: () => this.go('#/chat/' + d.matchId) });
+      UI.toast({ icon: ok ? '🎉' : '🙈', title: t(ok ? 'app.proposalConfirmed' : 'app.proposalDeclined', { name: d.byName }), text: Fmt.dateTimeLong(d.proposal.dateTime), onClick: () => this.go('#/chat/' + d.matchId) });
     });
     DataService.on('session', d => this.onSession(d));
     DataService.on('sync', () => { const v = this.view; if (v && v.route.view.onSync) v.route.view.onSync(v.ctx); });

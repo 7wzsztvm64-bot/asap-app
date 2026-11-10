@@ -1,11 +1,8 @@
+import { t, tOr, getLang } from '../i18n/index.js';
+
 /* =============================================================================
-   asap – Dating-App, in der man Date-Ideen statt Profile likt.
-   Aufbau des Codes (Module in src/js/, früher eine Datei):
-     1) Hilfsfunktionen, HTML-Templating, Formatierung, Icons, Konstanten
-     2) Krypto (SHA-256) & Storage-Adapter (nur vom DataService genutzt)
-     3) Testdaten (Seed)
-     4) DataService – die EINZIGE Schicht mit Datenzugriff (Mock-Backend)
-     5) UI: Komponenten, Router, Ansichten, Overlays, Entwickler-Panel
+   asap – Grundbausteine: Hilfsfunktionen, HTML-Templating, Formatierung (je Sprache),
+   Icons, fachliche Konstanten mit Anzeigenamen (Label) und Storage-Adapter.
    ============================================================================= */
 
 /* =============================================================================
@@ -85,73 +82,78 @@ function html(strings, ...values) {
   return new SafeHtml(out);
 }
 
-/* ---------- Formatierung (deutsch) ---------- */
+/* ---------- Formatierung (folgt der gewählten Sprache) ---------- */
 const Fmt = (() => {
-  const timeF = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
-  const wdShort = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
-  const wdLong = new Intl.DateTimeFormat('de-DE', { weekday: 'long' });
-  const dayMonthLong = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' });
-  const dayMonthNum = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' });
-  const monthShort = new Intl.DateTimeFormat('de-DE', { month: 'short' });
-  const num1 = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+  const cache = {};
+  /** Intl-Formatierer der aktuellen Sprache (einmal pro Sprache erzeugt). */
+  function f() {
+    const lang = getLang();
+    if (cache[lang]) return cache[lang];
+    const loc = lang === 'en' ? 'en-GB' : 'de-DE';
+    return (cache[lang] = {
+      time: new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit' }),
+      wdShort: new Intl.DateTimeFormat(loc, { weekday: 'short' }),
+      wdLong: new Intl.DateTimeFormat(loc, { weekday: 'long' }),
+      dayMonthLong: new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'long' }),
+      dayMonthNum: new Intl.DateTimeFormat(loc, { day: '2-digit', month: '2-digit' }),
+      monthShort: new Intl.DateTimeFormat(loc, { month: 'short' }),
+      num1: new Intl.NumberFormat(loc, { maximumFractionDigits: 1, minimumFractionDigits: 0 }),
+    });
+  }
   const DAY = 86400000;
   const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
   const dayDiff = ts => Math.round((startOfDay(Date.now()) - startOfDay(ts)) / DAY);
   const stripDot = s => s.replace(/\.$/, '');
-  const dm = d => dayMonthNum.format(d).replace(/\.?$/, '.'); // „10.10.“ (genau ein Punkt)
+  // Deutsch: „10.10.“ (genau ein Punkt), Englisch: „10/10“
+  const dm = d => (getLang() === 'de' ? f().dayMonthNum.format(d).replace(/\.?$/, '.') : f().dayMonthNum.format(d));
+  const time = d => f().time.format(d);
   return {
-    time: ts => timeF.format(new Date(ts)),
+    time: ts => time(new Date(ts)),
     chatListTime(ts) {
       const diff = dayDiff(ts);
-      if (diff <= 0) return timeF.format(new Date(ts));
-      if (diff === 1) return 'Gestern';
-      if (diff < 7) return stripDot(wdShort.format(new Date(ts))) + '.';
+      if (diff <= 0) return time(new Date(ts));
+      if (diff === 1) return t('fmt.yesterday');
+      if (diff < 7) return stripDot(f().wdShort.format(new Date(ts))) + (getLang() === 'de' ? '.' : '');
       return dm(new Date(ts));
     },
     dayLabel(ts) {
       const diff = dayDiff(ts);
-      if (diff === 0) return 'Heute';
-      if (diff === 1) return 'Gestern';
-      return wdLong.format(new Date(ts)) + ', ' + dayMonthLong.format(new Date(ts));
+      if (diff === 0) return t('fmt.today');
+      if (diff === 1) return t('fmt.yesterday');
+      return f().wdLong.format(new Date(ts)) + ', ' + f().dayMonthLong.format(new Date(ts));
     },
     relative(ts) {
       const s = Math.round((Date.now() - ts) / 1000);
-      if (s < 60) return 'gerade eben';
+      if (s < 60) return t('fmt.justNow');
       const m = Math.round(s / 60);
-      if (m < 60) return `vor ${m} Min.`;
+      if (m < 60) return t('fmt.minutesAgo', { n: m });
       const h = Math.round(m / 60);
-      if (h < 24) return `vor ${h} Std.`;
+      if (h < 24) return t('fmt.hoursAgo', { n: h });
       const d = dayDiff(ts);
-      if (d === 1) return 'gestern';
-      if (d < 7) return `vor ${d} Tagen`;
+      if (d === 1) return t('fmt.yesterdayLower');
+      if (d < 7) return t('fmt.daysAgo', { n: d });
       return dm(new Date(ts));
     },
     dateTimeLong(iso) {
       const d = new Date(iso);
-      return `${wdLong.format(d)}, ${dayMonthLong.format(d)} · ${timeF.format(d)} Uhr`;
+      return t('fmt.dateTimeLong', { weekday: f().wdLong.format(d), date: f().dayMonthLong.format(d), time: time(d) });
     },
     dateShort(iso) {
       const d = new Date(iso);
-      return `${stripDot(wdShort.format(d))}, ${dm(d)} · ${timeF.format(d)}`;
+      return `${stripDot(f().wdShort.format(d))}, ${dm(d)} · ${time(d)}`;
     },
-    whenSpoken(iso) {
-      const d = new Date(iso);
-      const diff = -dayDiff(d.getTime());
-      const day = diff === 0 ? 'heute' : diff === 1 ? 'morgen' : wdLong.format(d);
-      return `${day} um ${timeF.format(d)}`;
-    },
-    weekdayShort: iso => stripDot(wdShort.format(new Date(iso))),
-    weekdayLong: iso => wdLong.format(new Date(iso)),
-    monthShort: iso => stripDot(monthShort.format(new Date(iso))),
+    weekdayShort: iso => stripDot(f().wdShort.format(new Date(iso))),
+    weekdayLong: iso => f().wdLong.format(new Date(iso)),
+    monthShort: iso => stripDot(f().monthShort.format(new Date(iso))),
     dayNum: iso => new Date(iso).getDate(),
-    km: n => num1.format(n) + ' km',
+    km: n => f().num1.format(n) + ' km',
     countdown(iso) {
       const ms = new Date(iso).getTime() - Date.now();
-      if (ms < 0) return 'vorbei';
+      if (ms < 0) return t('fmt.past');
       const days = -dayDiff(new Date(iso).getTime());
-      if (days === 0) { const h = Math.max(1, Math.round(ms / 3600000)); return `in ${h} Std.`; }
-      if (days === 1) return 'morgen';
-      return `in ${days} Tagen`;
+      if (days === 0) return t('fmt.inHours', { n: Math.max(1, Math.round(ms / 3600000)) });
+      if (days === 1) return t('fmt.tomorrow');
+      return t('fmt.inDays', { n: days });
     },
   };
 })();
@@ -204,41 +206,52 @@ function logo(cls = '') {
   return html`<span class="logo ${cls}">${logoMark()}<span class="word">asap<i>.</i></span></span>`;
 }
 
-/* ---------- Fachliche Konstanten ---------- */
+/* ---------- Fachliche Konstanten ----------
+   Gespeichert wird immer der deutsche Wert (label/value) – er ist der Schlüssel in der Datenbank.
+   Angezeigt wird der übersetzte Name (name/label-Getter bzw. Label.*). */
 const CATEGORIES = [
-  { label: 'Essen & Trinken', emoji: '🍽️', from: '#FF6B4A', to: '#FFB25B' },
-  { label: 'Outdoor',         emoji: '🌿', from: '#2E9E6B', to: '#9BD770' },
-  { label: 'Kultur',          emoji: '🎭', from: '#6A4BD8', to: '#C77DDE' },
-  { label: 'Sport',           emoji: '🏸', from: '#1F7AE0', to: '#5CC8F0' },
-  { label: 'Abenteuer',       emoji: '🧗', from: '#E2335B', to: '#FF8A5B' },
-  { label: 'Entspannt',       emoji: '🧺', from: '#14A3A3', to: '#8EDDC9' },
-];
+  { label: 'Essen & Trinken', key: 'food',      emoji: '🍽️', from: '#FF6B4A', to: '#FFB25B' },
+  { label: 'Outdoor',         key: 'outdoor',   emoji: '🌿', from: '#2E9E6B', to: '#9BD770' },
+  { label: 'Kultur',          key: 'culture',   emoji: '🎭', from: '#6A4BD8', to: '#C77DDE' },
+  { label: 'Sport',           key: 'sport',     emoji: '🏸', from: '#1F7AE0', to: '#5CC8F0' },
+  { label: 'Abenteuer',       key: 'adventure', emoji: '🧗', from: '#E2335B', to: '#FF8A5B' },
+  { label: 'Entspannt',       key: 'relaxed',   emoji: '🧺', from: '#14A3A3', to: '#8EDDC9' },
+].map(c => ({ ...c, get name() { return t('values.category.' + c.key); } }));
 const CAT = Object.fromEntries(CATEGORIES.map(c => [c.label, c]));
 const BUDGETS = [
-  { value: '€',   label: 'günstig',  hint: 'bis ca. 15 € p. P.' },
-  { value: '€€',  label: 'mittel',   hint: 'ca. 15–40 € p. P.' },
-  { value: '€€€', label: 'gehoben',  hint: 'ab ca. 40 € p. P.' },
-];
+  { value: '€',   key: 'low' },
+  { value: '€€',  key: 'mid' },
+  { value: '€€€', key: 'high' },
+].map(b => ({ ...b, get label() { return t('values.budget.' + b.key); }, get hint() { return t('values.budgetHint.' + b.key); } }));
 const TIMES = [
-  { value: 'Morgens',     emoji: '🌅', defaultHour: '10:00' },
-  { value: 'Mittags',     emoji: '☀️', defaultHour: '12:30' },
-  { value: 'Nachmittags', emoji: '🌤️', defaultHour: '15:00' },
-  { value: 'Abends',      emoji: '🌙', defaultHour: '19:00' },
-  { value: 'Ganztags',    emoji: '🗓️', defaultHour: '10:30' },
-];
-const TIME = Object.fromEntries(TIMES.map(t => [t.value, t]));
+  { value: 'Morgens',     key: 'morning',   emoji: '🌅', defaultHour: '10:00' },
+  { value: 'Mittags',     key: 'midday',    emoji: '☀️', defaultHour: '12:30' },
+  { value: 'Nachmittags', key: 'afternoon', emoji: '🌤️', defaultHour: '15:00' },
+  { value: 'Abends',      key: 'evening',   emoji: '🌙', defaultHour: '19:00' },
+  { value: 'Ganztags',    key: 'allDay',    emoji: '🗓️', defaultHour: '10:30' },
+].map(x => ({ ...x, get name() { return t('values.time.' + x.key); } }));
+const TIME = Object.fromEntries(TIMES.map(x => [x.value, x]));
 const DURATIONS = ['ca. 1 Std.', '1–2 Std.', '2–3 Std.', 'Halber Tag', 'Ganzer Tag'];
+const DURATION_KEYS = { 'ca. 1 Std.': 'h1', '1–2 Std.': 'h1to2', '2–3 Std.': 'h2to3', 'Halber Tag': 'halfDay', 'Ganzer Tag': 'fullDay' };
 const GENDERS = [
-  { value: 'frau',   label: 'Frau',   plural: 'Frauen', emoji: '👩' },
-  { value: 'mann',   label: 'Mann',   plural: 'Männer', emoji: '👨' },
-  { value: 'divers', label: 'Divers', plural: 'Diverse', emoji: '🧑' },
-];
+  { value: 'frau',   emoji: '👩' },
+  { value: 'mann',   emoji: '👨' },
+  { value: 'divers', emoji: '🧑' },
+].map(g => ({ ...g, get label() { return t('values.gender.' + g.value); }, get plural() { return t('values.genderPlural.' + g.value); } }));
 const GENDER = Object.fromEntries(GENDERS.map(g => [g.value, g]));
 const INTEREST_CHOICES = [
-  { key: 'frau',  label: 'Frauen', emoji: '👩', value: ['frau'] },
-  { key: 'mann',  label: 'Männer', emoji: '👨', value: ['mann'] },
-  { key: 'alle',  label: 'Alle',   emoji: '🌈', value: ['frau', 'mann', 'divers'] },
-];
+  { key: 'frau',  emoji: '👩', value: ['frau'] },
+  { key: 'mann',  emoji: '👨', value: ['mann'] },
+  { key: 'alle',  emoji: '🌈', value: ['frau', 'mann', 'divers'] },
+].map(c => ({ ...c, get label() { return t('values.interestedIn.' + c.key); } }));
+/** Anzeigenamen für gespeicherte Werte (unbekannte Werte werden unverändert angezeigt). */
+const Label = {
+  category: v => (CAT[v] ? CAT[v].name : v),
+  time: v => (TIME[v] ? TIME[v].name : v),
+  duration: v => (DURATION_KEYS[v] ? t('values.duration.' + DURATION_KEYS[v]) : v),
+  gender: v => (GENDER[v] ? GENDER[v].label : v),
+  interest: tag => tOr('values.interest.' + tag, tag),
+};
 function interestKey(arr) {
   const a = (arr || []).slice().sort().join(',');
   if (a === 'frau') return 'frau';
@@ -329,4 +342,4 @@ class ApiError extends Error {
   }
 }
 
-export { Util, SafeHtml, escapeHtml, raw, renderValue, html, Fmt, ICONS, icon, __logoSeq, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIMES, TIME, DURATIONS, GENDERS, GENDER, INTEREST_CHOICES, interestKey, PLACES, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, SafeStorage, ApiError };
+export { Util, SafeHtml, escapeHtml, raw, renderValue, html, Fmt, ICONS, icon, __logoSeq, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIMES, TIME, DURATIONS, GENDERS, GENDER, INTEREST_CHOICES, Label, interestKey, PLACES, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, SafeStorage, ApiError };

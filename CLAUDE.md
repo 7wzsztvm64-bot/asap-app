@@ -46,7 +46,7 @@
 
 ## Regeln
 1. **Datenzugriff nur über `DataService`.** Die UI greift nie direkt auf localStorage, Supabase oder `fetch` zu. Beim Umbau auf Supabase bleiben Methodennamen, Parameter und Rückgabeformen gleich; Fehler kommen als `ApiError` (mit `fields` bei Validierung).
-2. **Texte über `t()`.** Jeder neue oder geänderte sichtbare Text kommt in `de.json` und `en.json`. Bestehende Texte einer Datei migrieren, wenn du sie ohnehin anfasst.
+2. **Texte über `t()`.** Jeder sichtbare Text steht in `de.json` **und** `en.json` (beide gleiche Schlüssel) und wird über `t('bereich.schluessel', { platzhalter })` genutzt – auch `aria-label`, Platzhalter und Toasts. Gespeicherte Werte (Kategorie, Budget, Tageszeit, Dauer, Geschlecht, Interessen) bleiben deutsch in der Datenbank und werden über `Label.*` bzw. die `name`/`label`-Getter aus `core.js` angezeigt; Datum/Zahlen über `Fmt`. Schleifenvariablen nie `t` nennen (verdeckt die Übersetzungsfunktion). Die Sprachwahl merkt sich `src/i18n/index.js` selbst (Gerät, keine Nutzerdaten); bei Wechsel zeichnet `App.applyLang()` neu.
 3. **Kein XSS:** HTML nur über das `html`-Tagged-Template (escaped automatisch). Kein `innerHTML` mit ungeprüften Nutzerdaten.
 4. **Sicherheit:** Row Level Security auf jeder Supabase-Tabelle. Niemals den `service_role`-Key im Frontend. Geheimnisse nur in `.env` (wird nicht committet).
 5. **DSGVO:** Datensparsam arbeiten. „Interessiert an“ (sexuelle Orientierung) und Fotos sind sensible Daten – nur speichern, was die Funktion braucht; Löschen muss vollständig möglich sein.
@@ -56,5 +56,5 @@
 9. **Commits** auf Deutsch, kurz und beschreibend; nie direkt `.env` oder Schlüssel committen.
 
 ## Aktueller Stand
-- Phase 0 erledigt. Phase 1: #1–#3 und #5–#10 erledigt. Offen: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #11 (Texte, laufend), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
+- Phase 0 erledigt. Phase 1: #1–#3 und #5–#11 erledigt (App komplett DE/EN). Offen: #4 (Bestätigungs-Mail – wartet auf Brevo-SMTP in `.env`, dann `npm run db:auth`), #12 (Abnahmetest mit zwei Handys, Checkliste in `docs/ABNAHMETEST.md`).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.

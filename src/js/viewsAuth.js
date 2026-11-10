@@ -1,6 +1,6 @@
-import { Util, raw, html, icon, logo, CATEGORIES, CAT, BUDGETS, TIMES, DURATIONS, GENDERS, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS } from './core.js';
+import { Util, raw, html, icon, logo, CATEGORIES, CAT, BUDGETS, TIMES, DURATIONS, GENDERS, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
-import { t } from '../i18n/index.js';
+import { t, getLang, setLang } from '../i18n/index.js';
 import { $, $$, shortCity, bindSubmit, toggleIn, UI, App } from './uiCore.js';
 
 /* =============================================================================
@@ -22,16 +22,24 @@ function bindReveal(root) {
     const show = input.type === 'password';
     input.type = show ? 'text' : 'password';
     b.innerHTML = String(icon(show ? 'eyeOff' : 'eye', 20));
-    b.setAttribute('aria-label', show ? 'Passwort verbergen' : 'Passwort anzeigen');
+    b.setAttribute('aria-label', t(show ? 'auth.hidePassword' : 'auth.showPassword'));
   });
 }
 function authHero() {
-  return html`<div class="auth-hero">${logo('lg')}<div class="tagline">Erst die Idee. Dann das Date.</div>
+  return html`<div class="auth-hero">${logo('lg')}<div class="tagline">${t('auth.tagline')}</div>
     <div class="floaters" aria-hidden="true">
-      <div class="floater"><span class="fe" style="--a:#FF6B4A;--b:#FFB25B">🥐</span>Sonntagsbrunch am Main</div>
-      <div class="floater"><span class="fe" style="--a:#E2335B;--b:#FF8A5B">🛶</span>Kanutour auf der Lahn</div>
-      <div class="floater"><span class="fe" style="--a:#6A4BD8;--b:#C77DDE">🎷</span>Jazzkeller-Abend</div>
+      <div class="floater"><span class="fe" style="--a:#FF6B4A;--b:#FFB25B">🥐</span>${t('auth.floater1')}</div>
+      <div class="floater"><span class="fe" style="--a:#E2335B;--b:#FF8A5B">🛶</span>${t('auth.floater2')}</div>
+      <div class="floater"><span class="fe" style="--a:#6A4BD8;--b:#C77DDE">🎷</span>${t('auth.floater3')}</div>
     </div></div>`;
+}
+/** Sprachumschalter für Login/Registrierung (vor dem Einloggen). */
+function langSwitch() {
+  const other = getLang() === 'de' ? 'en' : 'de';
+  return html`<p class="auth-switch"><button type="button" class="link-btn" data-lang="${other}">🌐 ${t('lang.switchTo')}</button></p>`;
+}
+function bindLangSwitch(root) {
+  root.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
 }
 
 const LoginView = {
@@ -40,22 +48,24 @@ const LoginView = {
     const demo = DataService.dev ? DataService.dev.testAccounts()[0] : null;
     el.innerHTML = html`<div class="auth">${authHero()}
       <form class="auth-form" novalidate>
-        <h2>Willkommen zurück</h2>
-        <p class="sub">Melde dich an und schau, wer bei deinen Ideen dabei ist.</p>
-        <div class="field" data-field="email"><label class="label" for="li-email">E-Mail</label>
-          <input id="li-email" class="input" type="email" name="email" autocomplete="username" inputmode="email" placeholder="du@beispiel.de"></div>
-        <div class="field" data-field="password"><label class="label" for="li-pw">Passwort</label>
+        <h2>${t('auth.welcomeBack')}</h2>
+        <p class="sub">${t('auth.loginSub')}</p>
+        <div class="field" data-field="email"><label class="label" for="li-email">${t('auth.email')}</label>
+          <input id="li-email" class="input" type="email" name="email" autocomplete="username" inputmode="email" placeholder="${t('auth.emailPlaceholder')}"></div>
+        <div class="field" data-field="password"><label class="label" for="li-pw">${t('auth.password')}</label>
           <div class="input-wrap"><input id="li-pw" class="input" type="password" name="password" autocomplete="current-password" placeholder="••••••••">
-          <button type="button" class="reveal" data-action="reveal" aria-label="Passwort anzeigen">${icon('eye', 20)}</button></div></div>
-        <div class="auth-row"><label class="check"><input type="checkbox" name="remember" checked><span class="box">${icon('check', 14, 3)}</span>Eingeloggt bleiben</label></div>
-        <button class="btn btn-primary btn-block" type="button" data-submit>Anmelden</button>
-        <p class="auth-switch">Neu bei asap? <a href="#/register" class="link-btn">Konto erstellen</a></p>
+          <button type="button" class="reveal" data-action="reveal" aria-label="${t('auth.showPassword')}">${icon('eye', 20)}</button></div></div>
+        <div class="auth-row"><label class="check"><input type="checkbox" name="remember" checked><span class="box">${icon('check', 14, 3)}</span>${t('auth.rememberMe')}</label></div>
+        <button class="btn btn-primary btn-block" type="button" data-submit>${t('auth.login')}</button>
+        <p class="auth-switch">${t('auth.newHere')} <a href="#/register" class="link-btn">${t('auth.register')}</a></p>
         ${demo ? html`<div class="demo-hint"><span style="font-size:22px" aria-hidden="true">🧪</span>
           <span class="grow"><b>${t('auth.testLogin')}</b> ${demo.email}<br>${t('dev.password')}: ${demo.password}</span>
           <button type="button" class="btn btn-soft btn-xs" data-action="fill">${t('auth.fill')}</button></div>` : ''}
+        ${langSwitch()}
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
+    bindLangSwitch(form);
     form.addEventListener('click', e => {
       if (demo && e.target.closest('[data-action="fill"]')) {
         form.email.value = demo.email;
@@ -69,13 +79,13 @@ const LoginView = {
       UI.clearErrors(form);
       const email = form.email.value.trim(), password = form.password.value;
       const f = {};
-      if (!Util.isValidEmail(email)) f.email = 'Bitte gib eine gültige E-Mail-Adresse ein.';
-      if (!password) f.password = 'Bitte gib dein Passwort ein.';
+      if (!Util.isValidEmail(email)) f.email = t('validation.email');
+      if (!password) f.password = t('validation.passwordMissing');
       if (Object.keys(f).length) return UI.fieldErrors(form, f);
       UI.busy(btn, true);
       try {
         const user = await DataService.login({ email, password, remember: form.remember.checked });
-        UI.toast({ icon: '👋', title: `Schön, dass du da bist${user.name ? ', ' + user.name : ''}!`, light: true, duration: 2400 });
+        UI.toast({ icon: '👋', title: user.name ? t('auth.welcomeName', { name: user.name }) : t('auth.welcome'), light: true, duration: 2400 });
       } catch (err) {
         UI.busy(btn, false);
         UI.handleError(err, form);
@@ -88,26 +98,28 @@ const LoginView = {
 const RegisterView = {
   async render(el) {
     el.innerHTML = html`<div class="auth">
-      <div class="topbar" style="padding-left:0;margin:0 -8px"><a class="icon-btn" href="#/login" aria-label="Zurück zum Login">${icon('back')}</a></div>
+      <div class="topbar" style="padding-left:0;margin:0 -8px"><a class="icon-btn" href="#/login" aria-label="${t('auth.backToLogin')}">${icon('back')}</a></div>
       <div style="padding:4px 0 6px">${logo()}</div>
       <form class="auth-form" novalidate>
-        <h2>Konto erstellen</h2>
-        <p class="sub">In zwei Minuten startklar – danach legst du deine erste Date-Idee an.</p>
-        <div class="field" data-field="email"><label class="label" for="re-email">E-Mail</label>
-          <input id="re-email" class="input" type="email" name="email" autocomplete="email" inputmode="email" placeholder="du@beispiel.de"></div>
-        <div class="field" data-field="password"><label class="label" for="re-pw">Passwort <span class="count">mind. 8 Zeichen</span></label>
+        <h2>${t('auth.register')}</h2>
+        <p class="sub">${t('auth.registerSub')}</p>
+        <div class="field" data-field="email"><label class="label" for="re-email">${t('auth.email')}</label>
+          <input id="re-email" class="input" type="email" name="email" autocomplete="email" inputmode="email" placeholder="${t('auth.emailPlaceholder')}"></div>
+        <div class="field" data-field="password"><label class="label" for="re-pw">${t('auth.password')} <span class="count">${t('auth.passwordHint')}</span></label>
           <div class="input-wrap"><input id="re-pw" class="input" type="password" name="password" autocomplete="new-password" placeholder="••••••••">
-          <button type="button" class="reveal" data-action="reveal" aria-label="Passwort anzeigen">${icon('eye', 20)}</button></div>
+          <button type="button" class="reveal" data-action="reveal" aria-label="${t('auth.showPassword')}">${icon('eye', 20)}</button></div>
           <div class="strength" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
-        <div class="field" data-field="passwordRepeat"><label class="label" for="re-pw2">Passwort wiederholen</label>
+        <div class="field" data-field="passwordRepeat"><label class="label" for="re-pw2">${t('auth.passwordRepeat')}</label>
           <div class="input-wrap"><input id="re-pw2" class="input" type="password" name="passwordRepeat" autocomplete="new-password" placeholder="••••••••">
-          <button type="button" class="reveal" data-action="reveal" aria-label="Passwort anzeigen">${icon('eye', 20)}</button></div></div>
-        <button class="btn btn-primary btn-block" type="button" data-submit>Konto erstellen</button>
+          <button type="button" class="reveal" data-action="reveal" aria-label="${t('auth.showPassword')}">${icon('eye', 20)}</button></div></div>
+        <button class="btn btn-primary btn-block" type="button" data-submit>${t('auth.register')}</button>
         <p class="legal">${t('auth.registerNote')}</p>
-        <p class="auth-switch">Schon dabei? <a href="#/login" class="link-btn">Anmelden</a></p>
+        <p class="auth-switch">${t('auth.haveAccount')} <a href="#/login" class="link-btn">${t('auth.login')}</a></p>
+        ${langSwitch()}
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
+    bindLangSwitch(form);
     // Mit E-Mail-Bestätigung (Supabase): Hinweis statt direktem Login
     function showConfirmation(email) {
       $('.auth-form', el).outerHTML = String(html`<div class="auth-form">${UI.empty({ emoji: '📬', title: t('confirmEmail.title'),
@@ -121,17 +133,17 @@ const RegisterView = {
       if (UI.isBusy(btn)) return;
       const data = { email: form.email.value.trim(), password: form.password.value, passwordRepeat: form.passwordRepeat.value };
       const f = {};
-      if (!Util.isValidEmail(data.email)) f.email = 'Bitte gib eine gültige E-Mail-Adresse ein.';
-      if (data.password.length < 8) f.password = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
-      if (!data.passwordRepeat) f.passwordRepeat = 'Bitte wiederhole dein Passwort.';
-      else if (data.password !== data.passwordRepeat) f.passwordRepeat = 'Die Passwörter stimmen nicht überein.';
+      if (!Util.isValidEmail(data.email)) f.email = t('validation.email');
+      if (data.password.length < 8) f.password = t('validation.passwordMin');
+      if (!data.passwordRepeat) f.passwordRepeat = t('validation.passwordRepeat');
+      else if (data.password !== data.passwordRepeat) f.passwordRepeat = t('validation.passwordMismatch');
       if (Object.keys(f).length) return UI.fieldErrors(form, f);
       UI.clearErrors(form);
       UI.busy(btn, true);
       try {
         const res = await DataService.register(data);
         if (res && res.needsConfirmation) { showConfirmation(res.email); return; }
-        UI.toast({ icon: '🎉', title: 'Willkommen bei asap!', text: 'Erzähl uns kurz etwas über dich.', light: true });
+        UI.toast({ icon: '🎉', title: t('auth.registeredTitle'), text: t('auth.registeredText'), light: true });
       } catch (err) {
         UI.busy(btn, false);
         UI.handleError(err, form);
@@ -141,46 +153,42 @@ const RegisterView = {
 };
 
 /* ---------- Ideen-Editor (Onboarding & „Neue Idee“) ---------- */
+// Texte (Titel, Beschreibung, Ort) kommen aus de/en.json unter inspiration.<n>
 const INSPIRATION = [
-  { emoji: '🥐', title: 'Sonntagsbrunch im Café Wacker, danach Spaziergang am Main', category: 'Essen & Trinken', budget: '€€', duration: '2–3 Std.', timeOfDay: 'Morgens', location: 'Café Wacker, Innenstadt',
-    description: 'Frisch gerösteter Kaffee, ein ausgiebiges Frühstück und danach ein Spaziergang über den Eisernen Steg mit Blick auf die Skyline.' },
-  { emoji: '🎳', title: 'Bowling-Duell mit Pommes-Wetteinsatz', category: 'Sport', budget: '€€', duration: '1–2 Std.', timeOfDay: 'Abends', location: 'Bowlingcenter, Innenstadt',
-    description: 'Zwei Runden Bowling – wer verliert, zahlt die Pommes. Talent ist ausdrücklich keine Voraussetzung.' },
-  { emoji: '🌅', title: 'Picknick zum Sonnenuntergang am Lohrberg', category: 'Outdoor', budget: '€', duration: '1–2 Std.', timeOfDay: 'Abends', location: 'Lohrberg, Seckbach',
-    description: 'Decke, Käse, Trauben und eine Flasche Apfelwein-Schorle – dazu der schönste Blick auf die Skyline, den Frankfurt zu bieten hat.' },
-  { emoji: '🎨', title: 'Malen & Wein: Wir porträtieren uns gegenseitig', category: 'Kultur', budget: '€€', duration: '2–3 Std.', timeOfDay: 'Abends', location: 'Atelier-Bar, Nordend',
-    description: 'Leinwand, Pinsel, ein Glas Wein – und die Aufgabe, den anderen zu malen. Lachen garantiert, Kunstwerk eher nicht.' },
-  { emoji: '🛶', title: 'Ruderboot fahren am Jacobiweiher', category: 'Abenteuer', budget: '€', duration: '1–2 Std.', timeOfDay: 'Nachmittags', location: 'Jacobiweiher, Stadtwald',
-    description: 'Eine Runde rudern, Enten beobachten und herausfinden, wer von uns besser steuern kann. Danach Waffeln im Waldcafé?' },
-  { emoji: '☕', title: 'Kaffee-Tasting: Drei Röstereien, ein Urteil', category: 'Essen & Trinken', budget: '€', duration: '2–3 Std.', timeOfDay: 'Nachmittags', location: 'Röstereien in Bornheim & Nordend',
-    description: 'Wir testen drei Röstereien und vergeben strenge Noten für Crema, Kuchen und Atmosphäre. Gewinner bekommt einen zweiten Besuch.' },
-];
+  { emoji: '🥐', category: 'Essen & Trinken', budget: '€€', duration: '2–3 Std.', timeOfDay: 'Morgens' },
+  { emoji: '🎳', category: 'Sport', budget: '€€', duration: '1–2 Std.', timeOfDay: 'Abends' },
+  { emoji: '🌅', category: 'Outdoor', budget: '€', duration: '1–2 Std.', timeOfDay: 'Abends' },
+  { emoji: '🎨', category: 'Kultur', budget: '€€', duration: '2–3 Std.', timeOfDay: 'Abends' },
+  { emoji: '🛶', category: 'Abenteuer', budget: '€', duration: '1–2 Std.', timeOfDay: 'Nachmittags' },
+  { emoji: '☕', category: 'Essen & Trinken', budget: '€', duration: '2–3 Std.', timeOfDay: 'Nachmittags' },
+].map((x, i) => ({ ...x, title: `inspiration.${i}.title`, description: `inspiration.${i}.description`, location: `inspiration.${i}.location` }));
+const inspirationIdea = x => ({ ...x, title: t(x.title), description: t(x.description), location: t(x.location) });
 
 const IdeaForm = {
   /** Rendert den Editor in container. Gibt { submit, getData } zurück. */
   mount(container, { idea = null, showInspiration = false, onSubmit }) {
     const st = Object.assign({ title: '', description: '', category: '', budget: '€€', duration: '2–3 Std.', timeOfDay: 'Abends', location: '', emoji: '' }, idea || {});
-    const me = App.user || { name: 'Du', age: '', city: '', photos: [] };
+    const me = App.user || { name: t('ideaForm.you'), age: '', city: '', photos: [] };
     container.innerHTML = html`
-      <div class="idea-preview-wrap"><div class="k">Vorschau – so sehen andere deine Idee</div><div class="preview-slot"></div></div>
-      ${showInspiration ? html`<div class="insp-row"><button type="button" class="btn btn-soft btn-sm" data-insp>${icon('sparkle', 16)} Inspiration einfügen</button></div>` : ''}
+      <div class="idea-preview-wrap"><div class="k">${t('ideaForm.preview')}</div><div class="preview-slot"></div></div>
+      ${showInspiration ? html`<div class="insp-row"><button type="button" class="btn btn-soft btn-sm" data-insp>${icon('sparkle', 16)} ${t('ideaForm.inspiration')}</button></div>` : ''}
       <form class="idea-form" novalidate>
-        <div class="field" data-field="title"><label class="label" for="if-title">Titel <span class="count"></span></label>
-          <input id="if-title" class="input" name="title" maxlength="80" placeholder="z. B. Sonntagsbrunch im Café Wacker, danach Spaziergang am Main" value="${st.title}"></div>
-        <div class="field" data-field="description"><label class="label" for="if-desc">Beschreibung <span class="count"></span></label>
-          <textarea id="if-desc" class="textarea" name="description" maxlength="300" placeholder="Was genau macht ihr? Was macht die Idee besonders?">${st.description}</textarea></div>
-        <div class="field" data-field="category"><span class="label">Kategorie</span>
-          <div class="chips">${CATEGORIES.map(c => html`<button type="button" class="chip ${st.category === c.label ? 'is-on' : ''}" data-cat="${c.label}">${c.emoji} ${c.label}</button>`)}</div></div>
-        <div class="field" data-field="budget"><span class="label">Budget <span class="count budget-hint"></span></span>
+        <div class="field" data-field="title"><label class="label" for="if-title">${t('ideaForm.title')} <span class="count"></span></label>
+          <input id="if-title" class="input" name="title" maxlength="80" placeholder="${t('ideaForm.titlePlaceholder')}" value="${st.title}"></div>
+        <div class="field" data-field="description"><label class="label" for="if-desc">${t('ideaForm.description')} <span class="count"></span></label>
+          <textarea id="if-desc" class="textarea" name="description" maxlength="300" placeholder="${t('ideaForm.descriptionPlaceholder')}">${st.description}</textarea></div>
+        <div class="field" data-field="category"><span class="label">${t('ideaForm.category')}</span>
+          <div class="chips">${CATEGORIES.map(c => html`<button type="button" class="chip ${st.category === c.label ? 'is-on' : ''}" data-cat="${c.label}">${c.emoji} ${c.name}</button>`)}</div></div>
+        <div class="field" data-field="budget"><span class="label">${t('ideaForm.budget')} <span class="count budget-hint"></span></span>
           <div class="seg">${BUDGETS.map(b => html`<button type="button" class="${st.budget === b.value ? 'is-on' : ''}" data-budget="${b.value}">${b.value} <span style="font-weight:500;opacity:.7">${b.label}</span></button>`)}</div></div>
-        <div class="field" data-field="timeOfDay"><span class="label">Tageszeit</span>
-          <div class="chips">${TIMES.map(t => html`<button type="button" class="chip ${st.timeOfDay === t.value ? 'is-on' : ''}" data-time="${t.value}">${t.emoji} ${t.value}</button>`)}</div></div>
-        <div class="field" data-field="duration"><label class="label" for="if-dur">Dauer</label>
-          <select id="if-dur" class="select" name="duration">${DURATIONS.map(x => html`<option value="${x}" ${x === st.duration ? raw('selected') : ''}>${x}</option>`)}</select></div>
-        <div class="field" data-field="location"><label class="label" for="if-loc">Ort / Treffpunkt</label>
-          <input id="if-loc" class="input" name="location" maxlength="70" placeholder="z. B. Café Wacker, Kornmarkt" value="${st.location}"></div>
-        <div class="field"><span class="label">Symbol <span class="count">optional</span></span>
-          <div class="emoji-pick">${IDEA_EMOJIS.map(e => html`<button type="button" class="${st.emoji === e ? 'is-on' : ''}" data-emoji="${e}" aria-label="Symbol ${e}">${e}</button>`)}</div></div>
+        <div class="field" data-field="timeOfDay"><span class="label">${t('ideaForm.timeOfDay')}</span>
+          <div class="chips">${TIMES.map(x => html`<button type="button" class="chip ${st.timeOfDay === x.value ? 'is-on' : ''}" data-time="${x.value}">${x.emoji} ${x.name}</button>`)}</div></div>
+        <div class="field" data-field="duration"><label class="label" for="if-dur">${t('ideaForm.duration')}</label>
+          <select id="if-dur" class="select" name="duration">${DURATIONS.map(x => html`<option value="${x}" ${x === st.duration ? raw('selected') : ''}>${Label.duration(x)}</option>`)}</select></div>
+        <div class="field" data-field="location"><label class="label" for="if-loc">${t('ideaForm.location')}</label>
+          <input id="if-loc" class="input" name="location" maxlength="70" placeholder="${t('ideaForm.locationPlaceholder')}" value="${st.location}"></div>
+        <div class="field"><span class="label">${t('ideaForm.symbol')} <span class="count">${t('ideaForm.optional')}</span></span>
+          <div class="emoji-pick">${IDEA_EMOJIS.map(e => html`<button type="button" class="${st.emoji === e ? 'is-on' : ''}" data-emoji="${e}" aria-label="${t('ideaForm.symbol')} ${e}">${e}</button>`)}</div></div>
       </form>`;
     const form = $('form', container);
     const preview = $('.preview-slot', container);
@@ -216,7 +224,7 @@ const IdeaForm = {
       if (t.dataset.time) st.timeOfDay = t.dataset.time;
       if (t.dataset.emoji) st.emoji = st.emoji === t.dataset.emoji ? '' : t.dataset.emoji;
       if (t.hasAttribute('data-insp')) {
-        const pool = INSPIRATION.filter(x => x.title !== st.title);
+        const pool = INSPIRATION.map(inspirationIdea).filter(x => x.title !== st.title);
         Object.assign(st, Util.pick(pool));
         UI.clearErrors(form);
       }
@@ -246,11 +254,11 @@ const OnboardingView = {
     let idx = u.profileComplete ? OB_STEPS.length - 1 : Util.clamp(u.onboardingStep || 0, 0, OB_STEPS.length - 2);
     let ideaApi = null;
     el.innerHTML = html`<div class="ob">
-      <div class="ob-top"><button type="button" class="icon-btn" data-ob="back" aria-label="Zurück">${icon('back')}</button>
+      <div class="ob-top"><button type="button" class="icon-btn" data-ob="back" aria-label="${t('common.back')}">${icon('back')}</button>
         <div class="ob-progress" role="progressbar" aria-valuemin="1" aria-valuemax="${OB_STEPS.length}"><i></i></div><span class="ob-count"></span></div>
       <div class="ob-body"></div>
-      <div class="ob-actions"><button type="button" class="btn btn-ghost" data-ob="skip" hidden>Überspringen</button>
-        <button type="button" class="btn btn-primary" style="flex:1" data-ob="next">Weiter</button></div>
+      <div class="ob-actions"><button type="button" class="btn btn-ghost" data-ob="skip" hidden>${t('onboarding.skip')}</button>
+        <button type="button" class="btn btn-primary" style="flex:1" data-ob="next">${t('onboarding.next')}</button></div>
     </div>`;
     const body = $('.ob-body', el);
     const maxBirth = (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 18); return Util.isoDate(d); })();
@@ -259,45 +267,45 @@ const OnboardingView = {
 
     function stepHtml(step) {
       switch (step) {
-        case 'name': return html`<div class="ob-emoji">👋</div><h2 class="ob-title">Wie heißt du?</h2>
-          <p class="ob-sub">Dein Vorname steht auf deinen Date-Ideen. Nachnamen brauchen wir nicht.</p>
-          <div class="field" data-field="name"><label class="sr-only" for="ob-name">Vorname</label>
-          <input id="ob-name" class="input big-input" name="name" maxlength="30" autocomplete="given-name" placeholder="Dein Vorname" value="${data.name}"></div>`;
-        case 'birthdate': return html`<div class="ob-emoji">🎂</div><h2 class="ob-title">Wann hast du Geburtstag?</h2>
-          <p class="ob-sub">Auf deinem Profil zeigen wir nur dein Alter. Du musst mindestens 18 Jahre alt sein.</p>
-          <div class="field" data-field="birthdate"><label class="sr-only" for="ob-birth">Geburtsdatum</label>
+        case 'name': return html`<div class="ob-emoji">👋</div><h2 class="ob-title">${t('onboarding.nameTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.nameSub')}</p>
+          <div class="field" data-field="name"><label class="sr-only" for="ob-name">${t('onboarding.firstName')}</label>
+          <input id="ob-name" class="input big-input" name="name" maxlength="30" autocomplete="given-name" placeholder="${t('onboarding.namePlaceholder')}" value="${data.name}"></div>`;
+        case 'birthdate': return html`<div class="ob-emoji">🎂</div><h2 class="ob-title">${t('onboarding.birthTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.birthSub')}</p>
+          <div class="field" data-field="birthdate"><label class="sr-only" for="ob-birth">${t('onboarding.birthdate')}</label>
           <input id="ob-birth" class="input big-input" type="date" name="birthdate" min="${minBirth}" max="${Util.isoDate(new Date())}" value="${data.birthdate}"></div>
           <div class="age-hint" aria-live="polite"></div>`;
-        case 'gender': return html`<div class="ob-emoji">🌈</div><h2 class="ob-title">Ich bin …</h2>
+        case 'gender': return html`<div class="ob-emoji">🌈</div><h2 class="ob-title">${t('onboarding.genderTitle')}</h2>
           <div class="field" data-field="gender"><div class="choice-grid">${GENDERS.map(g => html`<button type="button" class="choice ${data.gender === g.value ? 'is-on' : ''}" data-gender="${g.value}"><span class="ce">${g.emoji}</span>${g.label}</button>`)}</div></div>
-          <div class="ob-section-label">Ich interessiere mich für …</div>
+          <div class="ob-section-label">${t('onboarding.interestedIn')}</div>
           <div class="field" data-field="interestedIn"><div class="choice-grid">${INTEREST_CHOICES.map(c => html`<button type="button" class="choice ${interestKey(data.interestedIn) === c.key ? 'is-on' : ''}" data-interest="${c.key}"><span class="ce">${c.emoji}</span>${c.label}</button>`)}</div></div>`;
-        case 'city': return html`<div class="ob-emoji">📍</div><h2 class="ob-title">Wo wohnst du?</h2>
-          <p class="ob-sub">Damit wir dir Ideen in deiner Nähe zeigen. Ein Stadtteil reicht völlig.</p>
-          <div class="field" data-field="city"><label class="sr-only" for="ob-city">Stadt oder Stadtteil</label>
-          <input id="ob-city" class="input big-input" name="city" list="ob-cities" maxlength="60" placeholder="z. B. Frankfurt-Nordend" value="${data.city}">
+        case 'city': return html`<div class="ob-emoji">📍</div><h2 class="ob-title">${t('onboarding.cityTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.citySub')}</p>
+          <div class="field" data-field="city"><label class="sr-only" for="ob-city">${t('onboarding.city')}</label>
+          <input id="ob-city" class="input big-input" name="city" list="ob-cities" maxlength="60" placeholder="${t('onboarding.cityPlaceholder')}" value="${data.city}">
           <datalist id="ob-cities">${CITY_NAMES.map(c => html`<option value="${c}"></option>`)}</datalist></div>
           <div class="chips">${['Frankfurt-Nordend', 'Frankfurt-Sachsenhausen', 'Frankfurt-Bornheim', 'Frankfurt-Bockenheim', 'Offenbach am Main', 'Bad Homburg'].map(c => html`<button type="button" class="chip sm" data-city="${c}">${shortCity(c)}</button>`)}</div>`;
-        case 'bio': return html`<div class="ob-emoji">✍️</div><h2 class="ob-title">Erzähl was über dich</h2>
-          <p class="ob-sub">Zwei, drei Sätze reichen. Was sollte man über dich wissen, bevor man mit dir loszieht?</p>
-          <div class="field" data-field="bio"><label class="label" for="ob-bio">Über mich <span class="count">${data.bio.length}/300</span></label>
-          <textarea id="ob-bio" class="textarea" name="bio" maxlength="300" style="min-height:120px" placeholder="z. B. Kaffee-Nerd, Sonntagsläuferin, immer für Flohmärkte zu haben …">${data.bio}</textarea></div>
-          <div class="prompt-chips">${['Ein perfekter Sonntag beginnt für mich mit …', 'Ich kann stundenlang reden über …', 'Mein Geheimtipp in Frankfurt: …'].map(p => html`<button type="button" data-prompt="${p}">${p}</button>`)}</div>`;
-        case 'interests': return html`<div class="ob-emoji">✨</div><h2 class="ob-title">Was magst du?</h2>
-          <p class="ob-sub">Wähle 3 bis 10 Interessen – gemeinsame zeigen wir anderen hervorgehoben. <span class="tag-count">${data.interests.length}/10</span></p>
-          <div class="field" data-field="interests"><div class="chips">${INTEREST_TAGS.map(t => html`<button type="button" class="chip sm ${data.interests.includes(t) ? 'is-on' : ''}" data-tag="${t}">${t}</button>`)}</div></div>`;
+        case 'bio': return html`<div class="ob-emoji">✍️</div><h2 class="ob-title">${t('onboarding.bioTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.bioSub')}</p>
+          <div class="field" data-field="bio"><label class="label" for="ob-bio">${t('onboarding.aboutMe')} <span class="count">${data.bio.length}/300</span></label>
+          <textarea id="ob-bio" class="textarea" name="bio" maxlength="300" style="min-height:120px" placeholder="${t('onboarding.bioPlaceholder')}">${data.bio}</textarea></div>
+          <div class="prompt-chips">${[1, 2, 3].map(n => t('onboarding.prompt' + n)).map(p => html`<button type="button" data-prompt="${p}">${p}</button>`)}</div>`;
+        case 'interests': return html`<div class="ob-emoji">✨</div><h2 class="ob-title">${t('onboarding.interestsTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.interestsSub')} <span class="tag-count">${data.interests.length}/10</span></p>
+          <div class="field" data-field="interests"><div class="chips">${INTEREST_TAGS.map(tag => html`<button type="button" class="chip sm ${data.interests.includes(tag) ? 'is-on' : ''}" data-tag="${tag}">${Label.interest(tag)}</button>`)}</div></div>`;
         case 'photos': {
           const sel = data.photos.map(photoKey);
           const options = [...data.photos, ...PHOTO_PRESETS.filter(p => !sel.includes(photoKey(p)))];
-          return html`<div class="ob-emoji">📸</div><h2 class="ob-title">Deine Profilbilder</h2>
-          <p class="ob-sub">Im Prototyp nutzen wir farbige Platzhalter statt echter Fotos. Wähle 1 bis 3 – das erste ist dein Hauptbild.</p>
+          return html`<div class="ob-emoji">📸</div><h2 class="ob-title">${t('onboarding.photosTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.photosSub')}</p>
           <div class="field" data-field="photos"><div class="photo-grid">${options.map(p => {
             const i = sel.indexOf(photoKey(p));
             return html`<button type="button" class="photo-option ${i >= 0 ? 'is-on' : ''}" data-photo="${photoKey(p)}" aria-pressed="${i >= 0}">${UI.photoTile(p, data.name)}<span class="sel">${i >= 0 ? i + 1 : ''}</span></button>`;
           })}</div></div>`;
         }
-        case 'idea': return html`<div class="ob-emoji">💡</div><h2 class="ob-title">Deine erste Date-Idee</h2>
-          <p class="ob-sub">Was würdest du gern mit jemandem unternehmen? Sobald deine Idee steht, wird dein Feed freigeschaltet.</p>
+        case 'idea': return html`<div class="ob-emoji">💡</div><h2 class="ob-title">${t('onboarding.ideaTitle')}</h2>
+          <p class="ob-sub">${t('onboarding.ideaSub')}</p>
           <div class="idea-slot"></div>`;
         default: return '';
       }
@@ -311,7 +319,7 @@ const OnboardingView = {
       $('.ob-count', el).textContent = `${idx + 1} / ${OB_STEPS.length}`;
       $('[data-ob="back"]', el).style.visibility = (idx === 0 || (step === 'idea' && u.profileComplete && !data._fromSteps)) ? 'hidden' : 'visible';
       $('[data-ob="skip"]', el).hidden = step !== 'bio';
-      $('[data-ob="next"]', el).textContent = step === 'idea' ? 'Idee veröffentlichen & loslegen' : step === 'photos' ? 'Profil fertigstellen' : 'Weiter';
+      $('[data-ob="next"]', el).textContent = t(step === 'idea' ? 'onboarding.publish' : step === 'photos' ? 'onboarding.finishProfile' : 'onboarding.next');
       body.innerHTML = html`<div class="ob-step ${back ? 'back' : ''}">${stepHtml(step)}</div>`;
       body.scrollTop = 0;
       if (step === 'idea') ideaApi = IdeaForm.mount($('.idea-slot', body), { showInspiration: true, onSubmit: () => next() });
@@ -323,7 +331,7 @@ const OnboardingView = {
       const hint = $('.age-hint', body);
       if (!hint) return;
       const age = Util.ageFrom(data.birthdate);
-      hint.textContent = age === null ? '' : age < 18 ? 'Du musst mindestens 18 sein. 🙈' : `Du bist ${age} Jahre alt.`;
+      hint.textContent = age === null ? '' : age < 18 ? t('onboarding.tooYoung') : t('onboarding.age', { age });
     }
 
     body.addEventListener('input', e => {
@@ -349,7 +357,7 @@ const OnboardingView = {
         ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
       }
       if (t.dataset.tag) {
-        if (!data.interests.includes(t.dataset.tag) && data.interests.length >= 10) { UI.toast({ icon: '✋', title: 'Maximal 10 Interessen', light: true, duration: 1800 }); return; }
+        if (!data.interests.includes(t.dataset.tag) && data.interests.length >= 10) { UI.toast({ icon: '✋', title: t('onboarding.maxInterests'), light: true, duration: 1800 }); return; }
         toggleIn(data.interests, t.dataset.tag);
         t.classList.toggle('is-on');
         $('.tag-count', body).textContent = `${data.interests.length}/10`;
@@ -359,7 +367,7 @@ const OnboardingView = {
         const cur = data.photos.findIndex(p => photoKey(p) === key);
         if (cur >= 0) data.photos.splice(cur, 1);
         else {
-          if (data.photos.length >= 3) { UI.toast({ icon: '✋', title: 'Maximal 3 Bilder', text: 'Tippe ein ausgewähltes Bild an, um es zu entfernen.', light: true, duration: 2200 }); return; }
+          if (data.photos.length >= 3) { UI.toast({ icon: '✋', title: t('onboarding.maxPhotos'), text: t('onboarding.maxPhotosText'), light: true, duration: 2200 }); return; }
           const src = [...(u.photos || []), ...PHOTO_PRESETS].find(p => photoKey(p) === key);
           data.photos.push({ ...src });
         }
@@ -393,16 +401,16 @@ const OnboardingView = {
       const step = OB_STEPS[idx];
       UI.clearErrors(body);
       // schnelle Prüfung im Client – der DataService validiert zusätzlich
-      if (step === 'gender' && !data.gender) return UI.fieldErrors(body, { gender: 'Bitte wähle eine Option.' });
-      if (step === 'gender' && !data.interestedIn.length) return UI.fieldErrors(body, { interestedIn: 'Bitte wähle, für wen du dich interessierst.' });
-      if (step === 'photos' && !data.photos.length) return UI.fieldErrors(body, { photos: 'Wähle mindestens ein Profilbild.' });
+      if (step === 'gender' && !data.gender) return UI.fieldErrors(body, { gender: t('validation.profile.gender') });
+      if (step === 'gender' && !data.interestedIn.length) return UI.fieldErrors(body, { interestedIn: t('validation.profile.interestedIn') });
+      if (step === 'photos' && !data.photos.length) return UI.fieldErrors(body, { photos: t('validation.profile.photos') });
       UI.busy(btn, true);
       try {
         if (step === 'idea') {
           await DataService.createIdea(ideaApi.getData());
           await App.refreshUser();
           App.go('#/feed', { replace: true });
-          UI.toast({ icon: '🎉', title: 'Dein Feed ist freigeschaltet!', text: 'Psst … schau mal in deine Anfragen.', onClick: () => App.go('#/requests'), duration: 5200 });
+          UI.toast({ icon: '🎉', title: t('onboarding.unlockedTitle'), text: t('onboarding.unlockedText'), duration: 5200 });
           return;
         }
         const patch = skip ? { bio: '' } : patchFor(step);

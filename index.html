@@ -10,23 +10,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="asap">
 <meta name="format-detection" content="telephone=no">
-<meta name="description" content="asap – Dating-App-Prototyp: Likes gehen an konkrete Date-Ideen statt an Profile.">
+<meta name="description" content="asap – Dating-App: Likes gehen an konkrete Date-Ideen statt an Profile.">
 <title>asap – Erst die Idee, dann das Date</title>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
 <body>
 <div class="stage">
-  <aside class="pitch" aria-label="Über asap">
+  <aside class="pitch" aria-label="Über asap" data-i18n-aria="page.pitchAria">
     <div class="logo lg" id="pitch-logo"></div>
-    <h1>Erst die Idee.<br><em>Dann das Date.</em></h1>
-    <p>Bei <b>asap</b> likest du keine Gesichter, sondern konkrete Pläne. Wer zusagt, weiß schon, was ihr macht – und ihr seid schneller beim echten Treffen.</p>
+    <h1 data-i18n-html="page.pitchTitle">Erst die Idee.<br><em>Dann das Date.</em></h1>
+    <p data-i18n-html="page.pitchText">Bei <b>asap</b> likest du keine Gesichter, sondern konkrete Pläne. Wer zusagt, weiß schon, was ihr macht – und ihr seid schneller beim echten Treffen.</p>
     <ul>
-      <li><span class="n">💡</span><span><b>Ideen statt Profile:</b> Brunch, Kanutour, Jazzkeller – die Person siehst du trotzdem.</span></li>
-      <li><span class="n">❤️</span><span><b>Like mit Nachricht:</b> Die Anfrage landet direkt bei der Person hinter der Idee.</span></li>
-      <li><span class="n">📅</span><span><b>Vom Match zum Termin:</b> Im Chat ist das Date schon angeheftet – nur noch Uhrzeit wählen.</span></li>
+      <li><span class="n">💡</span><span data-i18n-html="page.pitch1"><b>Ideen statt Profile:</b> Brunch, Kanutour, Jazzkeller – die Person siehst du trotzdem.</span></li>
+      <li><span class="n">❤️</span><span data-i18n-html="page.pitch2"><b>Like mit Nachricht:</b> Die Anfrage landet direkt bei der Person hinter der Idee.</span></li>
+      <li><span class="n">📅</span><span data-i18n-html="page.pitch3"><b>Vom Match zum Termin:</b> Im Chat ist das Date schon angeheftet – nur noch Uhrzeit wählen.</span></li>
     </ul>
-    <div class="pitch-note">⚙️ Test-Logins &amp; Account-Wechsel im Dev-Panel · Swipen mit <kbd>←</kbd> <kbd>→</kbd></div>
+    <div class="pitch-note" data-i18n-html="page.pitchNote">Swipen mit <kbd>←</kbd> <kbd>→</kbd></div>
   </aside>
 
   <div class="device" id="device">
@@ -43,18 +43,18 @@
       <div id="app" class="app">
         <div class="netbar" id="netbar" aria-hidden="true"></div>
         <div id="views" class="views"></div>
-        <nav id="tabbar" class="tabbar" hidden aria-label="Hauptnavigation"></nav>
+        <nav id="tabbar" class="tabbar" hidden aria-label="Hauptnavigation" data-i18n-aria="page.navAria"></nav>
         <div id="overlay-root"></div>
         <div id="toast-root" role="status" aria-live="polite"></div>
       </div>
     </div>
   </div>
 
-  <button id="dev-toggle" class="dev-toggle" type="button" aria-label="Entwickler-Panel öffnen" aria-expanded="false">
+  <button id="dev-toggle" class="dev-toggle" type="button" aria-label="Entwickler-Panel öffnen" data-i18n-aria="dev.open" aria-expanded="false">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     <span class="dt-label">Dev-Panel</span>
   </button>
-  <aside id="dev-panel" class="dev-panel" hidden aria-label="Entwickler-Panel"></aside>
+  <aside id="dev-panel" class="dev-panel" hidden aria-label="Entwickler-Panel" data-i18n-aria="dev.title"></aside>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>
