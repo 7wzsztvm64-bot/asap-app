@@ -3,5 +3,6 @@
   "uri_allow_list": "http://localhost:5173/**,http://localhost:4173/**,http://192.168.*.*:5173/**",
   "password_min_length": 8,
   "mailer_autoconfirm": false,
-  "mailer_subjects_confirmation": "Bestätige deine E-Mail-Adresse für asap"
+  "mailer_subjects_confirmation": "Bestätige deine E-Mail-Adresse für asap",
+  "mailer_subjects_recovery": "Dein neues Passwort für asap"
 }

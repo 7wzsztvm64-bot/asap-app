@@ -142,6 +142,7 @@ async function applyAuthConfig() {
   const dir = join(import.meta.dirname, '..', 'supabase', 'auth');
   const config = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8'));
   config.mailer_templates_confirmation_content = readFileSync(join(dir, 'confirmation.html'), 'utf8');
+  config.mailer_templates_recovery_content = readFileSync(join(dir, 'recovery.html'), 'utf8');
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SENDER_EMAIL } = process.env;
   if (SMTP_HOST && SMTP_USER && SMTP_PASS && SMTP_SENDER_EMAIL) {
     Object.assign(config, { smtp_host: SMTP_HOST, smtp_port: String(SMTP_PORT || 587), smtp_user: SMTP_USER, smtp_pass: SMTP_PASS,
