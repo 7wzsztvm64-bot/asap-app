@@ -74,8 +74,8 @@
 ## Aktueller Stand (17.11.2026)
 - **Phase 0 und 1** erledigt bis auf #4 (Bestätigungs-Mail) und #12 (Abnahmetest) – Brevo ist eingerichtet (`db:auth` übernommen, SMTP-Anmeldung geprüft, deutsche Vorlagen für Bestätigung und Passwort), es fehlt nur Noahs Mail-Test auf dem Handy.
 - **Phase 2** erledigt bis auf #17 (Passwort vergessen – gleicher Mail-Test).
-- **Phase 3** (Issues #20–#27, Entscheidungen in `docs/ROADMAP.md`): erledigt #22 Einladungscodes, #25 Backups, #26 Feedback. Technisch fertig, wartet auf Noah: #23 Rechtstexte (Entwürfe prüfen, `VITE_CONTACT_*` setzen), #24 Moderations-Mail (Brevo-API-Schlüssel). Vorbereitet: #20 (`--prod`, `config.prod.json`), #21 (`netlify.toml`, CSP lokal geprüft).
-- 48 DB-Tests (`npm run test:db`) und 6 Browser-Tests (`npm run test:e2e`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher; gilt für beide Projekte).
+- **Phase 3** (Issues #20–#27, Entscheidungen in `docs/ROADMAP.md`): erledigt #22 Einladungscodes, #25 Backups, #26 Feedback. Technisch fertig, wartet auf Noah: #23 Rechtstexte (Entwürfe prüfen, `VITE_CONTACT_*` setzen), #24 Moderations-Mail (Brevo-API-Schlüssel). #20 erledigt: Produktionsprojekt `asap-prod` (Ref `ygcgvxeaaxpzchosirwk`, Frankfurt, Free) mit allen Migrationen, Brevo-Mails, Weiterleitung auf https://asap-beta.netlify.app, Einladungscode-Pflicht an; Security Advisor ohne echte Befunde (WARN zu security-definer-RPCs ist gewollt). Vorbereitet: #21 (`netlify.toml`, CSP lokal geprüft).
+- 48 DB-Tests (`npm run test:db`) und 6 Browser-Tests (`npm run test:e2e`), alle grün. Supabase-Access-Token „asap-claude“ gilt für Test- und Produktionsprojekt und läuft am 15.02.2027 ab (`db:*` warnt vorher).
 - Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate` (und nach #20 zusätzlich `-- --prod`).
 
 ## Nächste Schritte (beim Start einer neuen Sitzung)
