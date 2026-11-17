@@ -23,6 +23,10 @@
 - `npm run db:seed` – Testpersonen in Supabase neu anlegen (alle `@datedate.app`-Konten, Passwort `Test1234`; löscht vorher die alten)
 - `npm run db:auth` – Auth-Einstellungen aus `supabase/auth/` übernehmen (+ SMTP aus `.env`, falls gesetzt)
 - `npm run db:query -- "SQL"` – einzelne Abfrage gegen das echte Projekt (nur lesend benutzen, Änderungen immer als Migration; `--json` für JSON-Ausgabe)
+- `npm run db:invite -- list | create 20 "Notiz" | required on|off` – Einladungscodes der Beta (#22)
+- `npm run db:notify -- setup | test | status | remove` – tägliche Moderations-Mail (#24, braucht `BREVO_API_KEY` in `.env`)
+- `npm run db:backup` / `npm run db:restore-check -- <Ordner>` – Backup nach `~/asap-backups/<dev|prod>/` (30 Tage) und Prüfung per Einspielen in PGlite (#25)
+- **Produktion:** alle `db:*`-Befehle mit `-- --prod` (Werte aus `.env.prod`, nicht im Repo); `db:seed` ist dort gesperrt. Ohne `--prod` immer das Testprojekt
 
 ## Struktur
 - `index.html` – Grundgerüst (Smartphone-Rahmen auf dem Desktop, App-Container)
@@ -41,11 +45,13 @@
 - `supabase/tests/` – Datenbank-Tests (`npm run test:db`); neue Policies hier mit einem Test absichern
 - `e2e/` – Browser-Tests (`npm run test:e2e`); neue Hauptabläufe hier ergänzen
 - `supabase/auth/` – Auth-Einstellungen und Mail-Vorlage (übernehmen mit `npm run db:auth`)
-- Moderation: im Supabase-Dashboard unter Schema `moderation` (nicht über die API erreichbar): `open_reports` (Meldungen), `pending_photos` (Fotos zur Prüfung: Datei unter Storage → `photos` → `<owner_id>` ansehen, dann in `public.photos` `status` auf `approved`/`rejected`), `orphan_photo_files` (Dateien ohne Eintrag, unter Storage löschen)
+- Moderation: im Supabase-Dashboard unter Schema `moderation` (nicht über die API erreichbar): `feedback_inbox` (Feedback aus der App, #26), `invite_codes` + `config` (Einladungscodes, #22), `open_reports` (Meldungen), `pending_photos` (Fotos zur Prüfung: Datei unter Storage → `photos` → `<owner_id>` ansehen, dann in `public.photos` `status` auf `approved`/`rejected`), `orphan_photo_files` (Dateien ohne Eintrag, unter Storage löschen)
 - Fotos (#18): privater Storage-Bucket `photos` (`<user-id>/<uuid>.jpg`), Tabelle `public.photos` mit Prüfstatus; die Farb-Platzhalter in `profiles.photos` bleiben als Ersatz. Dateien lassen sich per SQL nicht löschen – nur über die Storage-API (App bzw. `db:seed`)
 - `scripts/db.mjs` – Werkzeug für `db:migrate`, `db:seed`, `db:auth`, `db:query` (Supabase Management-API)
 - `docs/ABNAHMETEST.md` – Checkliste für den Test mit zwei Handys (#12)
 - `public/` – statische Dateien (Icon, Favicon, `sw.js`)
+- `netlify.toml` – Build und Sicherheits-Header (CSP) für die Web-Beta auf Netlify (#21)
+- `src/i18n/legal.de.json` / `legal.en.json` – Rechtstexte (Datenschutz, Nutzungsregeln, Impressum), Kontaktangaben aus `VITE_CONTACT_*`; bei wesentlichen Änderungen `LEGAL_VERSION` in `src/i18n/index.js` erhöhen
 - `prototype/dabei-prototype.html` – ursprünglicher Single-File-Prototyp, **nur Referenz, nicht ändern**
 
 ## Regeln
@@ -65,15 +71,20 @@
 3. **Aufgaben, die Noah selbst erledigen muss** (Konten anlegen, Dashboards, Handys): **nacheinander**, jeweils mit genauen Angaben (wo klicken, was eintragen) – die nächste erst, wenn die vorige erledigt ist.
 4. Zum Testen im Browser: `npm run test:e2e` (zwei getrennte Browser-Kontexte, seedet selbst). Für Einzelprüfungen/Screenshots eigene Skripte im Scratchpad mit `playwright-core` aus `node_modules` und `channel: 'chrome'`; danach `npm run db:seed`.
 
-## Aktueller Stand (10.11.2026)
-- **Phase 0 und 1** erledigt bis auf #4 (Bestätigungs-Mail – wartet auf Brevo) und #12 (Abnahmetest mit zwei Handys, Checkliste `docs/ABNAHMETEST.md`). App komplett DE/EN (#11).
-- **Phase 2:** erledigt #13 Blockieren, #14 Melden, #15 Konto löschen, #16 Datenexport, #18 Foto-Upload mit manueller Prüfung, #19 Missbrauchsschutz. #17 Passwort vergessen gebaut, Mail-Rundweg wartet auf Brevo.
-- 40 DB-Tests (`npm run test:db`) und 3 Browser-Tests (`npm run test:e2e`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher).
-- Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate`.
+## Aktueller Stand (17.11.2026)
+- **Phase 0 und 1** erledigt bis auf #4 (Bestätigungs-Mail) und #12 (Abnahmetest) – Brevo ist eingerichtet (`db:auth` übernommen, SMTP-Anmeldung geprüft, deutsche Vorlagen für Bestätigung und Passwort), es fehlt nur Noahs Mail-Test auf dem Handy.
+- **Phase 2** erledigt bis auf #17 (Passwort vergessen – gleicher Mail-Test).
+- **Phase 3** (Issues #20–#27, Entscheidungen in `docs/ROADMAP.md`): erledigt #22 Einladungscodes, #25 Backups, #26 Feedback. Technisch fertig, wartet auf Noah: #23 Rechtstexte (Entwürfe prüfen, `VITE_CONTACT_*` setzen), #24 Moderations-Mail (Brevo-API-Schlüssel). Vorbereitet: #20 (`--prod`, `config.prod.json`), #21 (`netlify.toml`, CSP lokal geprüft).
+- 48 DB-Tests (`npm run test:db`) und 6 Browser-Tests (`npm run test:e2e`), alle grün. Supabase-Access-Token läuft am 09.12.2026 ab (`db:*` warnt vorher; gilt für beide Projekte).
+- Neue DB-Logik immer als Migration + Test in `supabase/tests/`; danach `npm run test:db` und `npm run db:migrate` (und nach #20 zusätzlich `-- --prod`).
 
 ## Nächste Schritte (beim Start einer neuen Sitzung)
-Getroffene Entscheidungen (10.11.2026): Foto-Prüfung **manuell durch Noah** im Dashboard; Browser-Tests mit `playwright-core` im Repo.
-Zuerst offene Entscheidungen **nacheinander** als Auswahl stellen, dann Noahs Aufgaben **nacheinander** geben, parallel alles Übrige selbst erledigen:
-- **Aufgabe A – Brevo einrichten** (Anleitung am 10.11. gegeben; danach #4 und #17 abschließen): Konto auf brevo.com → Senders: Absender „asap“ mit privater Adresse bestätigen → SMTP & API → SMTP-Schlüssel erzeugen → in `.env`: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SENDER_EMAIL` → dann `npm run db:auth` und Registrierung + Passwort vergessen mit Noahs Adresse testen.
-- **Aufgabe B – #12 Handy-Test** nach `docs/ABNAHMETEST.md` (Variante A geht sofort, inkl. Foto-Upload; B nach Brevo).
-- Danach Phase 3 (Web-Beta: Hosting, eigenes Produktions-Supabase-Projekt, siehe „Für später vermerkt“ in `docs/ROADMAP.md`). Vor der Beta klären: Foto-Pflicht (mind. ein echtes Foto?) und wie Noah über neue Fotos zur Prüfung erfährt.
+Getroffene Entscheidungen: Foto-Prüfung manuell; Browser-Tests im Repo; Netlify; Produktionsprojekt Free; Einladungscodes; vorerst keine Domain; Rechtstexte-Entwurf durch Claude.
+Offene Entscheidung: **Backup-Rhythmus** – wöchentlich automatisch per macOS-launchd auf Noahs Mac (Empfehlung) oder manuell mit Erinnerung.
+Noahs Aufgaben **nacheinander** (die nächste erst, wenn die vorige erledigt ist):
+1. **Mail-Test auf dem Handy** (#4, #17, #12 Variante B): `npm run dev:lan` → registrieren → Bestätigungs-Mail (Spam prüfen) → Onboarding → Abmelden → „Passwort vergessen“ → Konto löschen.
+2. **Produktionsprojekt anlegen** (#20): supabase.com → New project, Name `asap-prod`, Region Frankfurt (eu-central-1), Free → URL und publishable/anon Key in `.env.prod` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Danach Claude: `db:migrate/auth -- --prod`, `db:invite -- required on --prod`, Codes anlegen. Außerdem im Dashboard die DPA (Organization → Legal Documents) unterschreiben.
+3. **Netlify** (#21): Konto mit GitHub → Add new site → Repo `asap-app` → Site-Name `asap-beta` → Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Produktion), `VITE_CONTACT_NAME/ADDRESS/EMAIL`; DPA von Netlify anfordern.
+4. **Brevo-API-Schlüssel** (#24): Brevo → SMTP & API → API Keys → Generate → `BREVO_API_KEY` in `.env` → Claude: `db:notify -- setup --prod` und `test`.
+5. **Rechtstexte prüfen** (#23): `src/i18n/legal.de.json` lesen (in der App unter Profil → Rechtliches), Korrekturen an Claude.
+Danach #27 Beta-Durchführung (Einladung, Anleitung, Begleitung).
