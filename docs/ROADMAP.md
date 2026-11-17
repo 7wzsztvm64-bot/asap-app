@@ -48,6 +48,18 @@ Jeweils: Titel – Ziel. *Fertig, wenn …* · 18+ ist bereits serverseitig erle
 18. **Foto-Upload mit Prüfung** – echte Fotos statt Platzhalter: Supabase Storage (privater Bucket), Verkleinern im Browser, Prüfung vor der Freischaltung. *Fertig, wenn hochgeladene Fotos erst nach der Prüfung für andere sichtbar sind.* ✔ Prüfung manuell im Dashboard (`moderation.pending_photos`), Tests in `supabase/tests/photos.test.mjs` und `npm run test:e2e`.
 19. **Missbrauchsschutz** – serverseitige Obergrenzen gegen Spam (Likes pro Tag, Nachrichten pro Minute, Meldungen pro Tag). *Fertig, wenn Überschreitungen abgelehnt werden (Test belegt das).*
 
+## Phase 3 – Web-Beta Frankfurt – Issues zum Kopieren
+Entscheidungen (11.11.2026): Hosting auf Netlify, Produktionsprojekt Supabase Free (Frankfurt), Registrierung nur mit Einladungscode, vorerst keine eigene Domain (asap-beta.netlify.app), Rechtstexte als Entwurf von Claude, Prüfung durch Noah.
+
+20. **Produktionsprojekt** – zweites Supabase-Projekt (Free, Frankfurt) für echte Beta-Personen; `db:*`-Skripte mit Zielwahl, Testdaten dort gesperrt. *Fertig, wenn alle Migrationen und Auth-Einstellungen im Produktionsprojekt sind und `db:seed` dort verweigert wird.*
+21. **Hosting auf Netlify** – Build bei jedem Push auf main, HTTPS, Schlüssel des Produktionsprojekts als Umgebungsvariablen, Weiterleitungen in Supabase Auth. *Fertig, wenn die Beta unter asap-beta.netlify.app läuft und die Registrierung mit Mail funktioniert.*
+22. **Einladungscodes** – Registrierung nur mit gültigem Code (Prüfung in der Datenbank), Codes im Dashboard anlegen, Nutzungen begrenzen. *Fertig, wenn ohne gültigen Code keine Registrierung möglich ist (Test belegt das).*
+23. **Rechtstexte & Einwilligung** – Datenschutzerklärung, Nutzungsregeln, Impressum (Entwürfe); ausdrückliche Einwilligung für „Interessiert an“ (Art. 9 DSGVO) und Zustimmung bei der Registrierung; Texte in der App erreichbar. *Fertig, wenn ohne Zustimmung keine Registrierung möglich ist und die Texte in der App stehen.*
+24. **Moderations-Hinweis per Mail** – tägliche Mail an Noah, wenn neue Meldungen oder Fotos zur Prüfung warten. *Fertig, wenn eine neue Meldung spätestens am nächsten Tag per Mail ankommt.*
+25. **Backups** – Free hat keine automatischen Backups: `npm run db:backup` sichert alle Daten des Produktionsprojekts lokal (außerhalb des Repos). *Fertig, wenn ein Backup erstellt und testweise wieder eingespielt wurde.*
+26. **Feedback in der App** – „Feedback geben“ im Profil (Text, App-Version, Gerät), landet im Dashboard. *Fertig, wenn Feedback aus der App im Dashboard ankommt.*
+27. **Beta-Durchführung** – 15–20 Testpersonen einladen (Anleitung, Code, Hinweis auf Spam-Ordner), zwei Wochen begleiten, Feedback auswerten. *Fertig, wenn 15–20 Personen die App zwei Wochen genutzt haben.*
+
 ## Für später vermerkt
 - **Phase 5 (Recht & Store):** Schutz vor geleakten Passwörtern in Supabase Auth aktivieren (Abgleich mit HaveIBeenPwned; Empfehlung des Security Advisors, ggf. kostenpflichtiger Tarif) – zusammen mit Datenschutzerklärung entscheiden.
 - **Phase 3 (Web-Beta) / 5:** Eigene Domain für asap (nach der Namensprüfung) → Mails von einer eigenen Absenderadresse (SPF/DKIM) statt der einzelnen in Brevo bestätigten Adresse; Site URL/Weiterleitungen in `supabase/auth/config.json` auf die echte Adresse umstellen.
