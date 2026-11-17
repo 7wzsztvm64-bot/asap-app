@@ -134,6 +134,45 @@ test('Foto-Upload: erst nach der Freigabe für andere sichtbar, Löschen entfern
   assert.equal(fileCount(), 0, 'Datei gelöscht');
 });
 
+test('Rechtstexte ohne Login erreichbar, Registrierung nur mit Zustimmung', { timeout: 60000 }, async () => {
+  const guest = await (await browser.newContext({ locale: 'de-DE' })).newPage();
+  guest.on('pageerror', e => pageErrors.push(`Gast: ${e.message}`));
+  await guest.goto(baseUrl + '#/legal/privacy');
+  await guest.locator('section.view[data-view="legal"] .legal-doc h3').first().waitFor();
+  await guest.goto(baseUrl + '#/register');
+  await view(guest).locator('[data-legal="terms"]').first().click();
+  await guest.locator('.sheet .legal-doc').waitFor();
+  await guest.locator('.sheet [data-close]').first().click();
+  await guest.locator('.sheet').waitFor({ state: 'detached' });
+  await view(guest).locator('#re-email').fill('niemand@example.org');
+  await view(guest).locator('#re-pw').fill('Geheim1234');
+  await view(guest).locator('#re-pw2').fill('Geheim1234');
+  await view(guest).locator('[data-submit]').click();
+  await view(guest).locator('[data-field="terms"] .field-error').waitFor();
+  await guest.context().close();
+});
+
+test('Einwilligung „Interessiert an“: widerrufen → Onboarding → neu einwilligen', { timeout: 60000 }, async () => {
+  const { jonas } = pages;
+  await go(jonas, '#/profile', 'profile');
+  await view(jonas).locator('[data-action="withdraw-consent"]').click();
+  await jonas.locator('.dialog [data-res="1"]').click();
+  await jonas.locator('section.view[data-view="onboarding"]:not([aria-hidden])').waitFor();
+  const ob = view(jonas);
+  await ob.locator('[data-interest="frau"]').click();
+  await ob.locator('[data-ob="next"]').click();
+  await ob.locator('[data-field="consent"] .field-error').waitFor(); // ohne Häkchen geht es nicht weiter
+  await ob.locator('.consent .box').click();
+  // Restliche Schritte sind schon ausgefüllt – durchklicken bis zum Feed
+  for (let i = 0; i < 6 && !(await jonas.locator('section.view[data-view="feed"]:not([aria-hidden])').count()); i++) {
+    await view(jonas).locator('[data-ob="next"]').click();
+    await jonas.waitForTimeout(700);
+  }
+  await jonas.locator('section.view[data-view="feed"]:not([aria-hidden])').waitFor();
+  const p = JSON.parse(db('query', `select profile_complete, sensitive_consent_at is not null as consent, interested_in from public.profiles where id = '${JONAS.id}'`, '--json'))[0];
+  assert.deepEqual(p, { profile_complete: true, consent: true, interested_in: ['frau'] });
+});
+
 test('Keine JavaScript-Fehler in den Seiten', () => {
   assert.deepEqual(pageErrors, []);
 });

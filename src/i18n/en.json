@@ -13,7 +13,7 @@
     "register": "Create account",
     "rememberMe": "Stay logged in",
     "wrongCredentials": "Email or password is incorrect.",
-    "registerNote": "Development version: your data is stored on the asap server in Frankfurt (Supabase).",
+    "registerNote": "Your data is stored in Frankfurt am Main, Germany (Supabase).",
     "testLogin": "Test login:",
     "fill": "Fill in",
     "hidePassword": "Hide password",
@@ -127,7 +127,9 @@
     "PHOTO_LIMIT": "You can upload up to 3 photos. Delete one first.",
     "PHOTO_TOO_LARGE": "This photo is too large. Please choose another one.",
     "PHOTO_UPLOAD": "The photo could not be uploaded. Please try again.",
-    "INVITE_INVALID": "This invite code is invalid or already used up."
+    "INVITE_INVALID": "This invite code is invalid or already used up.",
+    "CONSENT_REQUIRED": "Please first consent to us storing “interested in”.",
+    "TERMS_REQUIRED": "Please accept the community rules."
   },
   "validation": {
     "email": "Please enter a valid email address.",
@@ -176,7 +178,8 @@
     "photoType": "This image format is not supported. Please choose a JPG or PNG photo.",
     "photoSmall": "This photo is too small (at least 200 pixels).",
     "inviteCode": "This invite code is invalid or already used up.",
-    "inviteCodeMissing": "Please enter your invite code."
+    "inviteCodeMissing": "Please enter your invite code.",
+    "terms": "Please confirm that you are at least 18 and accept the community rules."
   },
   "chat": {
     "proposalPreview": {
@@ -704,5 +707,25 @@
     "uploaded": "Photo uploaded",
     "uploadedText": "We will review it shortly. Until then, others see your placeholder.",
     "alt": "Photo of {name}"
+  },
+  "legal": {
+    "title": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Community rules",
+    "imprint": "Legal notice"
+  },
+  "consent": {
+    "termsBefore": "I am at least 18 years old and accept the",
+    "termsMiddle": ". I have read the ",
+    "termsAfter": ".",
+    "sensitive": "I explicitly consent to asap storing my “interested in” setting so that it only shows me people who match. This may reveal my sexual orientation. I can withdraw at any time in my profile.",
+    "more": "Learn more",
+    "required": "Without this consent we cannot show you people who match.",
+    "withdraw": "Withdraw consent for “interested in”",
+    "withdrawTitle": "Withdraw consent?",
+    "withdrawText": "Your “interested in” setting will be deleted. Your profile will then be hidden from others until you set it again and consent again. Your data and chats stay stored – to delete everything, use “Delete account”.",
+    "withdrawConfirm": "Withdraw",
+    "withdrawn": "Consent withdrawn",
+    "withdrawnText": "Your profile is now hidden. You can set “interested in” again here."
   }
 }

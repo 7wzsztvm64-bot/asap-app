@@ -3,9 +3,9 @@ import { DataService } from './dataService.js';
 import { LoginView, RegisterView, OnboardingView } from './viewsAuth.js';
 import { FeedView, RequestsView, UserProfileView } from './viewsFeed.js';
 import { ChatsView, ChatView, DatesView } from './viewsChat.js';
-import { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, DevPanel } from './viewsProfile.js';
+import { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, LegalView, DevPanel } from './viewsProfile.js';
 
-import { t, t as i18n, onLangChange } from '../i18n/index.js'; // i18n: wo „t“ als Schleifenvariable belegt ist
+import { t, t as i18n, onLangChange, legalDoc } from '../i18n/index.js'; // i18n: wo „t“ als Schleifenvariable belegt ist
 /* =============================================================================
    UI – Komponenten, Overlays, Router
    Die UI spricht ausschließlich mit dem DataService (nie mit localStorage).
@@ -43,6 +43,12 @@ const UI = {
     const colors = ph && ph.colors ? ph.colors : ['#FFB547', '#FF5A3C'];
     const hasEmoji = ph && ph.emoji;
     return html`<div class="photo pat-${(ph && ph.pattern) || 0} ${hasEmoji ? '' : 'init-only'} ${cls}" style="--a:${colors[0]};--b:${colors[1]}">${hasEmoji ? html`<span class="ph-emoji">${ph.emoji}</span>` : ''}<span class="ph-init">${Util.initials(name)}</span></div>`;
+  },
+  /** Ausdrückliche Einwilligung für „Interessiert an“ (Onboarding, Profil bearbeiten) */
+  consentCheck() {
+    return html`<div class="field consent-field" data-field="consent"><label class="check consent">
+      <input type="checkbox" name="sensitiveConsent"><span class="box">${icon('check', 14, 3)}</span>
+      <span>${t('consent.sensitive')} <button type="button" class="link-btn" data-legal="privacy">${t('consent.more')}</button></span></label></div>`;
   },
   ideaThumb(idea, size = '') {
     const cat = CAT[idea && idea.category] || CATEGORIES[0];
@@ -223,6 +229,21 @@ const UI = {
     if (root && err && err.fields) { UI.fieldErrors(root, err.fields); return; }
     if (root) { UI.alert(root, (err && err.message) || t('common.unknownError')); return; }
     UI.toast({ icon: '⚠️', title: t('common.failedTitle'), text: (err && err.message) || t('common.tryAgain') });
+  },
+};
+
+/* ---------- Rechtstexte (Datenschutz, Nutzungsregeln, Impressum) ----------
+   Als Sheet über jeden Button mit data-legal="privacy|terms|imprint" (globaler Klick-Handler im App-Start)
+   oder als eigene Seite #/legal/<doc> (z. B. für Links in Einladungen). */
+const Legal = {
+  body(doc) {
+    const d = legalDoc(doc);
+    return html`<div class="legal-doc"><p class="legal-intro">${d.intro}</p>${d.sections.map(s => html`<section><h3>${s.h}</h3>
+      ${s.p.map(p => html`<p>${p}</p>`)}${s.li.length ? html`<ul>${s.li.map(x => html`<li>${x}</li>`)}</ul>` : ''}</section>`)}</div>`;
+  },
+  open(doc) {
+    const d = legalDoc(doc);
+    if (d) UI.sheet({ title: d.title, body: Legal.body(doc) });
   },
 };
 
@@ -484,6 +505,8 @@ const App = {
       { name: 'idea-new', re: /^#\/ideas\/new$/, view: IdeaEditView, depth: 2 },
       { name: 'idea-edit', re: /^#\/ideas\/([\w-]+)\/edit$/, view: IdeaEditView, depth: 2 },
       { name: 'user', re: /^#\/user\/([\w-]+)$/, view: UserProfileView, depth: 2 },
+      // open: mit und ohne Login erreichbar, auch während des Onboardings
+      { name: 'legal', re: /^#\/legal\/(privacy|terms|imprint)$/, view: LegalView, open: true, depth: 3 },
     ];
   },
   needsOnboarding(u) { return !!u && (!u.profileComplete || !u.firstIdeaCreated); },
@@ -521,8 +544,8 @@ const App = {
     // ---- Zugriffsschutz: ohne Login nur Login/Registrierung ----
     if (!route) return this.go(this.homeFor(u), { replace: true });
     if (route.guest && u) return this.go(this.homeFor(u), { replace: true });
-    if (!route.guest && !u) return this.go('#/login', { replace: true });
-    if (u && !route.guest) {
+    if (!route.guest && !route.open && !u) return this.go('#/login', { replace: true });
+    if (u && !route.guest && !route.open) {
       const needs = this.needsOnboarding(u);
       if (needs && !this.allowedDuringOnboarding.includes(route.name)) return this.go('#/onboarding', { replace: true });
       if (!needs && route.name === 'onboarding') return this.go('#/feed', { replace: true });
@@ -672,6 +695,8 @@ const App = {
     document.addEventListener('click', e => {
       const back = e.target.closest('[data-action="back"]');
       if (back && $('#app').contains(back)) { e.preventDefault(); this.back(back.dataset.fallback || '#/feed'); return; }
+      const legal = e.target.closest('[data-legal]');
+      if (legal) { e.preventDefault(); Legal.open(legal.dataset.legal); return; }
       const go = e.target.closest('[data-go]');
       if (go && $('#app').contains(go)) { e.preventDefault(); this.go(go.dataset.go); }
     });
@@ -682,4 +707,4 @@ const App = {
   },
 };
 
-export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, PhotoUploads, LikeSheet, SafetyMenu, MatchOverlay, TABS, makeCtx, App };
+export { $, $$, FALLBACK_GRADIENTS, shortCity, catStyle, bindSubmit, toggleIn, UI, Legal, PhotoUploads, LikeSheet, SafetyMenu, MatchOverlay, TABS, makeCtx, App };

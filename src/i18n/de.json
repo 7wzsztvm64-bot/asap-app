@@ -13,7 +13,7 @@
     "register": "Konto erstellen",
     "rememberMe": "Eingeloggt bleiben",
     "wrongCredentials": "E-Mail oder Passwort ist falsch.",
-    "registerNote": "Entwicklungsversion: Deine Daten werden auf dem asap-Server in Frankfurt (Supabase) gespeichert.",
+    "registerNote": "Deine Daten werden in Frankfurt am Main gespeichert (Supabase).",
     "testLogin": "Test-Login:",
     "fill": "Ausfüllen",
     "hidePassword": "Passwort verbergen",
@@ -127,7 +127,9 @@
     "PHOTO_LIMIT": "Du kannst höchstens 3 Fotos hochladen. Lösch zuerst eins.",
     "PHOTO_TOO_LARGE": "Das Foto ist zu groß. Bitte wähle ein anderes.",
     "PHOTO_UPLOAD": "Das Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal.",
-    "INVITE_INVALID": "Dieser Einladungscode ist ungültig oder schon aufgebraucht."
+    "INVITE_INVALID": "Dieser Einladungscode ist ungültig oder schon aufgebraucht.",
+    "CONSENT_REQUIRED": "Bitte willige zuerst ein, dass wir „Interessiert an“ speichern dürfen.",
+    "TERMS_REQUIRED": "Bitte stimme den Nutzungsregeln zu."
   },
   "validation": {
     "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -176,7 +178,8 @@
     "photoType": "Dieses Bildformat wird nicht unterstützt. Bitte wähle ein JPG- oder PNG-Foto.",
     "photoSmall": "Das Foto ist zu klein (mindestens 200 Pixel).",
     "inviteCode": "Dieser Einladungscode ist ungültig oder schon aufgebraucht.",
-    "inviteCodeMissing": "Bitte gib deinen Einladungscode ein."
+    "inviteCodeMissing": "Bitte gib deinen Einladungscode ein.",
+    "terms": "Bitte bestätige, dass du mindestens 18 bist und den Nutzungsregeln zustimmst."
   },
   "chat": {
     "proposalPreview": {
@@ -704,5 +707,25 @@
     "uploaded": "Foto hochgeladen",
     "uploadedText": "Wir prüfen es kurz. Bis zur Freigabe sehen andere deinen Platzhalter.",
     "alt": "Foto von {name}"
+  },
+  "legal": {
+    "title": "Rechtliches",
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsregeln",
+    "imprint": "Impressum"
+  },
+  "consent": {
+    "termsBefore": "Ich bin mindestens 18 Jahre alt und akzeptiere die",
+    "termsMiddle": ". Die ",
+    "termsAfter": " habe ich gelesen.",
+    "sensitive": "Ich willige ausdrücklich ein, dass asap meine Angabe „Interessiert an“ speichert, um mir nur Personen zu zeigen, die zu mir passen. Daraus kann sich meine sexuelle Orientierung ergeben. Widerruf jederzeit im Profil.",
+    "more": "Mehr dazu",
+    "required": "Ohne diese Einwilligung können wir dir keine passenden Personen zeigen.",
+    "withdraw": "Einwilligung „Interessiert an“ widerrufen",
+    "withdrawTitle": "Einwilligung widerrufen?",
+    "withdrawText": "Deine Angabe „Interessiert an“ wird gelöscht. Dein Profil ist dann für andere nicht mehr sichtbar, bis du sie neu angibst und wieder einwilligst. Deine Daten und Chats bleiben gespeichert – vollständig löschen kannst du sie mit „Konto löschen“.",
+    "withdrawConfirm": "Widerrufen",
+    "withdrawn": "Einwilligung widerrufen",
+    "withdrawnText": "Dein Profil ist jetzt unsichtbar. Du kannst „Interessiert an“ hier neu angeben."
   }
 }

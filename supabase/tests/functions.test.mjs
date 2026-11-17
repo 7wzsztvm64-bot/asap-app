@@ -33,7 +33,7 @@ before(async () => {
 /* ---------- #4 / #5 Registrierung & Onboarding ---------- */
 test('Registrierung legt automatisch ein leeres Profil an', async () => {
   await t.asAdmin();
-  await t.db.query(`insert into auth.users (id) values ($1)`, [NEU]);
+  await t.db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, '{"terms_version": "test"}')`, [NEU]);
   await t.as(NEU);
   const me = await t.one(`select * from public.profiles where id = $1`, [NEU]);
   assert.equal(me.profile_complete, false);
@@ -49,6 +49,7 @@ test('18+ wird serverseitig geprüft', async () => {
 test('Onboarding abschließen nur mit vollständigem Profil', async () => {
   await t.as(NEU);
   await assert.rejects(t.db.query(`select public.complete_onboarding()`), code('PROFILE_INCOMPLETE'));
+  await t.db.query(`select public.give_sensitive_consent()`);
   await t.db.query(`update public.profiles set name = 'Neu', birthdate = '2000-01-01', gender = 'divers', interested_in = '{frau,mann,divers}',
     city = 'Offenbach am Main', interests = '{Kaffee,Kino,Jazz}', photos = '[{"id":"x","colors":["#000","#fff"],"emoji":null,"pattern":1}]' where id = $1`, [NEU]);
   await t.db.query(`select public.complete_onboarding()`);

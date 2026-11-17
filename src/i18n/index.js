@@ -4,6 +4,8 @@
    selbst in localStorage gemerkt. Ohne gespeicherte Wahl gilt die Browsersprache, sonst Deutsch. */
 import de from './de.json' with { type: 'json' };
 import en from './en.json' with { type: 'json' };
+import legalDe from './legal.de.json' with { type: 'json' };
+import legalEn from './legal.en.json' with { type: 'json' };
 
 const DICTS = { de, en };
 const STORE_KEY = 'asap.lang';
@@ -43,4 +45,25 @@ export function t(key, vars = {}) {
 /** Wie t(), aber mit eigenem Rückfallwert, falls es den Schlüssel nicht gibt (z. B. freie Werte aus der Datenbank). */
 export function tOr(key, fallback, vars = {}) {
   return lookup(DICTS[lang], key) != null || lookup(DICTS.de, key) != null ? t(key, vars) : fallback;
+}
+
+/* Rechtstexte (Datenschutz, Nutzungsregeln, Impressum) stehen wegen ihrer Länge in legal.de.json/legal.en.json.
+   Version der Texte: bei wesentlichen Änderungen erhöhen – wird bei der Registrierung gespeichert. */
+export const LEGAL_VERSION = '2026-11-beta';
+export const LEGAL_DOCS = ['privacy', 'terms', 'imprint'];
+const LEGAL = { de: legalDe, en: legalEn };
+/** Kontaktdaten des Verantwortlichen aus .env bzw. Netlify (VITE_CONTACT_*), damit die Adresse nicht im Repo steht. */
+function contact() {
+  const env = import.meta.env || {};
+  const missing = lang === 'en' ? '[to be added]' : '[wird ergänzt]';
+  return { name: env.VITE_CONTACT_NAME || missing, address: env.VITE_CONTACT_ADDRESS || missing, email: env.VITE_CONTACT_EMAIL || missing };
+}
+/** Ein Rechtstext in der aktuellen Sprache, Platzhalter ({name}, {address}, {email}) gefüllt. */
+export function legalDoc(doc) {
+  const src = (LEGAL[lang] || LEGAL.de)[doc];
+  if (!src) return null;
+  const vars = contact();
+  const fill = s => String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
+  return { title: src.title, intro: fill(src.intro),
+    sections: src.sections.map(x => ({ h: fill(x.h), p: (x.p || []).map(fill), li: (x.li || []).map(fill) })) };
 }

@@ -99,14 +99,14 @@ async function seed() {
     sql.push(`insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
         created_at, updated_at, confirmation_token, recovery_token, email_change, email_change_token_new)
       values ('00000000-0000-0000-0000-000000000000', ${U(u.id)}, 'authenticated', 'authenticated', ${lit(u.email)},
-        extensions.crypt(${lit(TEST_PASSWORD)}, extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}',
+        extensions.crypt(${lit(TEST_PASSWORD)}, extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"terms_version":"seed"}',
         ${ts(u.createdAt)}, now(), '', '', '', '');`);
     sql.push(`insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
       values (gen_random_uuid(), ${U(u.id)}, ${lit(seedUuid(u.id))}, jsonb_build_object('sub', ${lit(seedUuid(u.id))}, 'email', ${lit(u.email)}, 'email_verified', true),
         'email', now(), now(), now());`);
     sql.push(`update public.profiles set name = ${lit(u.name)}, birthdate = ${lit(u.birthdate)}, gender = ${lit(u.gender)},
         interested_in = ${texts(u.interestedIn)}, city = ${lit(u.city)}, bio = ${lit(u.bio)}, interests = ${texts(u.interests)},
-        photos = ${lit(JSON.stringify(u.photos))}::jsonb, profile_complete = true, onboarding_step = 99, created_at = ${ts(u.createdAt)}
+        photos = ${lit(JSON.stringify(u.photos))}::jsonb, sensitive_consent_at = now(), profile_complete = true, onboarding_step = 99, created_at = ${ts(u.createdAt)}
       where id = ${U(u.id)};`);
   }
   for (const i of data.ideas) {

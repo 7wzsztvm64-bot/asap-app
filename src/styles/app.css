@@ -713,3 +713,18 @@ svg{flex-shrink:0}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* ---------- Rechtstexte & Einwilligung (#23) ---------- */
+.legal-doc{font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.legal-doc .legal-intro{margin:0 0 14px;color:var(--ink-3)}
+.legal-doc section{margin:0 0 16px}
+.legal-doc h3{font-size:15.5px;font-weight:800;color:var(--ink);margin:0 0 6px;letter-spacing:-.01em}
+.legal-doc p{margin:0 0 6px}
+.legal-doc ul{margin:0;padding-left:20px}
+.legal-doc li{margin:0 0 5px}
+.check.consent{align-items:flex-start;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.check.consent .box{flex:none;margin-top:1px}
+.check.consent .link-btn{font-size:inherit;padding:0;display:inline}
+.consent-field{margin-top:14px}
+.auth-legal{text-align:center;font-size:12.5px;color:var(--ink-3);margin:10px 0 0}
+.auth-legal .link-btn{font-size:inherit;color:var(--ink-3);font-weight:600}

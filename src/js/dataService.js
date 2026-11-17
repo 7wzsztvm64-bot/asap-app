@@ -1,5 +1,5 @@
 import { Util, ApiError } from './core.js';
-import { t } from '../i18n/index.js';
+import { t, LEGAL_VERSION } from '../i18n/index.js';
 import { supabase, setRememberSession, checkSupabaseHealth } from './supabase.js';
 // Nur für die Entwickler-Funktionen; im Produktionsbuild entfernt Vite den Import (siehe api.dev)
 import { TEST_ACCOUNTS, SEED_PEOPLE, seedUuid } from './seed.js';
@@ -202,6 +202,7 @@ const DataService = (() => {
       // photos = Farb-Platzhalter (Ersatz), uploads = echte Fotos mit Prüfstatus (pending/approved/rejected)
       city: row.city, bio: row.bio, photos: row.photos, uploads: photoUploads, interests: row.interests, createdAt: ms(row.created_at),
       profileComplete: row.profile_complete, onboardingStep: row.onboarding_step,
+      termsVersion: row.terms_version, sensitiveConsentAt: ms(row.sensitive_consent_at),
       // Das Onboarding endet mit der ersten eigenen Idee
       firstIdeaCreated: ideas.length > 0,
       age: Util.ageFrom(row.birthdate), ideasCount: live.length, activeIdeasCount: live.filter(i => i.active).length,
@@ -371,16 +372,17 @@ const DataService = (() => {
     getSignupOptions() {
       return request('rpc.invite_required', async () => ({ inviteRequired: !!(await rpc('invite_required')) }));
     },
-    register({ email, password, passwordRepeat, inviteCode = '' }) {
+    register({ email, password, passwordRepeat, inviteCode = '', acceptTerms = false }) {
       return request('auth.signUp', async () => {
         const em = validateCredentials({ email, password, passwordRepeat });
+        if (!acceptTerms) throw validationError({ terms: t('validation.terms') });
         const code = String(inviteCode || '').trim();
         const inviteError = () => validationError({ inviteCode: t('validation.inviteCode') });
         // Vorab prüfen für eine klare Meldung – verbindlich prüft der Trigger bei der Registrierung
         if (await rpc('invite_required') && !(code && await rpc('check_invite_code', { p_code: code }))) throw inviteError();
         setRememberSession(true);
         const { data, error } = await supabase.auth.signUp({ email: em, password,
-          options: { emailRedirectTo: location.origin + location.pathname, data: code ? { invite_code: code } : {} } });
+          options: { emailRedirectTo: location.origin + location.pathname, data: { terms_version: LEGAL_VERSION, ...(code ? { invite_code: code } : {}) } } });
         // Lehnt ein Datenbank-Trigger ab, meldet Supabase Auth nur „Database error saving new user“
         if (error && /database error saving new user/i.test(error.message || '')) throw inviteError();
         if (error) throw error;
@@ -482,6 +484,22 @@ const DataService = (() => {
         unwrap(await supabase.from('photos').delete().eq('id', photoId));
         photoUrls.delete(row.path);
         const user = await loadMe(id);
+        changed('profile');
+        return user;
+      });
+    },
+    /** Ausdrückliche Einwilligung für „Interessiert an“ (Art. 9 DSGVO) – Zeitpunkt setzt der Server. */
+    giveSensitiveConsent() {
+      return request('rpc.give_sensitive_consent', async () => {
+        await rpc('give_sensitive_consent');
+        return loadMe(await myId());
+      });
+    },
+    /** Einwilligung widerrufen: „Interessiert an“ wird gelöscht, das Profil ist bis zur neuen Einwilligung unsichtbar. */
+    withdrawSensitiveConsent() {
+      return request('rpc.withdraw_sensitive_consent', async () => {
+        await rpc('withdraw_sensitive_consent');
+        const user = await loadMe(await myId());
         changed('profile');
         return user;
       });

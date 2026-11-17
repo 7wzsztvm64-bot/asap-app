@@ -64,6 +64,13 @@ function openForgot(prefill) {
   });
 }
 
+/** Links zu Impressum und Datenschutz – auf jeder Seite ohne Login erreichbar */
+function legalLinks() {
+  return html`<p class="auth-legal"><button type="button" class="link-btn" data-legal="imprint">${t('legal.imprint')}</button> ·
+    <button type="button" class="link-btn" data-legal="privacy">${t('legal.privacy')}</button> ·
+    <button type="button" class="link-btn" data-legal="terms">${t('legal.terms')}</button></p>`;
+}
+
 const LoginView = {
   async render(el) {
     // Test-Login-Hinweis nur mit npm run dev (im Produktionsbuild ist DataService.dev null)
@@ -85,6 +92,7 @@ const LoginView = {
           <span class="grow"><b>${t('auth.testLogin')}</b> ${demo.email}<br>${t('dev.password')}: ${demo.password}</span>
           <button type="button" class="btn btn-soft btn-xs" data-action="fill">${t('auth.fill')}</button></div>` : ''}
         ${langSwitch()}
+        ${legalLinks()}
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
@@ -139,10 +147,13 @@ const RegisterView = {
         <div class="field" data-field="passwordRepeat"><label class="label" for="re-pw2">${t('auth.passwordRepeat')}</label>
           <div class="input-wrap"><input id="re-pw2" class="input" type="password" name="passwordRepeat" autocomplete="new-password" placeholder="••••••••">
           <button type="button" class="reveal" data-action="reveal" aria-label="${t('auth.showPassword')}">${icon('eye', 20)}</button></div></div>
+        <div class="field" data-field="terms"><label class="check consent"><input type="checkbox" name="acceptTerms"><span class="box">${icon('check', 14, 3)}</span>
+          <span>${t('consent.termsBefore')} <button type="button" class="link-btn" data-legal="terms">${t('legal.terms')}</button>${t('consent.termsMiddle')}<button type="button" class="link-btn" data-legal="privacy">${t('legal.privacy')}</button>${t('consent.termsAfter')}</span></label></div>
         <button class="btn btn-primary btn-block" type="button" data-submit>${t('auth.register')}</button>
         <p class="legal">${t('auth.registerNote')}</p>
         <p class="auth-switch">${t('auth.haveAccount')} <a href="#/login" class="link-btn">${t('auth.login')}</a></p>
         ${langSwitch()}
+        ${legalLinks()}
       </form></div>`;
     const form = $('form', el);
     bindReveal(form);
@@ -164,13 +175,14 @@ const RegisterView = {
     bindSubmit(form, async () => {
       const btn = $('[data-submit]', form);
       if (UI.isBusy(btn)) return;
-      const data = { email: form.email.value.trim(), password: form.password.value, passwordRepeat: form.passwordRepeat.value, inviteCode: form.inviteCode.value };
+      const data = { email: form.email.value.trim(), password: form.password.value, passwordRepeat: form.passwordRepeat.value, inviteCode: form.inviteCode.value, acceptTerms: form.acceptTerms.checked };
       const f = {};
       if (inviteRequired && !data.inviteCode.trim()) f.inviteCode = t('validation.inviteCodeMissing');
       if (!Util.isValidEmail(data.email)) f.email = t('validation.email');
       if (data.password.length < 8) f.password = t('validation.passwordMin');
       if (!data.passwordRepeat) f.passwordRepeat = t('validation.passwordRepeat');
       else if (data.password !== data.passwordRepeat) f.passwordRepeat = t('validation.passwordMismatch');
+      if (!data.acceptTerms) f.terms = t('validation.terms');
       if (Object.keys(f).length) return UI.fieldErrors(form, f);
       UI.clearErrors(form);
       UI.busy(btn, true);
@@ -313,7 +325,8 @@ const OnboardingView = {
         case 'gender': return html`<div class="ob-emoji">🌈</div><h2 class="ob-title">${t('onboarding.genderTitle')}</h2>
           <div class="field" data-field="gender"><div class="choice-grid">${GENDERS.map(g => html`<button type="button" class="choice ${data.gender === g.value ? 'is-on' : ''}" data-gender="${g.value}"><span class="ce">${g.emoji}</span>${g.label}</button>`)}</div></div>
           <div class="ob-section-label">${t('onboarding.interestedIn')}</div>
-          <div class="field" data-field="interestedIn"><div class="choice-grid">${INTEREST_CHOICES.map(c => html`<button type="button" class="choice ${interestKey(data.interestedIn) === c.key ? 'is-on' : ''}" data-interest="${c.key}"><span class="ce">${c.emoji}</span>${c.label}</button>`)}</div></div>`;
+          <div class="field" data-field="interestedIn"><div class="choice-grid">${INTEREST_CHOICES.map(c => html`<button type="button" class="choice ${interestKey(data.interestedIn) === c.key ? 'is-on' : ''}" data-interest="${c.key}"><span class="ce">${c.emoji}</span>${c.label}</button>`)}</div></div>
+          ${App.user.sensitiveConsentAt ? '' : UI.consentCheck()}`;
         case 'city': return html`<div class="ob-emoji">📍</div><h2 class="ob-title">${t('onboarding.cityTitle')}</h2>
           <p class="ob-sub">${t('onboarding.citySub')}</p>
           <div class="field" data-field="city"><label class="sr-only" for="ob-city">${t('onboarding.city')}</label>
@@ -442,6 +455,8 @@ const OnboardingView = {
       // schnelle Prüfung im Client – der DataService validiert zusätzlich
       if (step === 'gender' && !data.gender) return UI.fieldErrors(body, { gender: t('validation.profile.gender') });
       if (step === 'gender' && !data.interestedIn.length) return UI.fieldErrors(body, { interestedIn: t('validation.profile.interestedIn') });
+      const consent = step === 'gender' && !skip ? $('[name="sensitiveConsent"]', body) : null;
+      if (consent && !consent.checked) return UI.fieldErrors(body, { consent: t('consent.required') });
       if (step === 'photos' && !data.photos.length) return UI.fieldErrors(body, { photos: t('validation.profile.photos') });
       UI.busy(btn, true);
       try {
@@ -452,10 +467,13 @@ const OnboardingView = {
           UI.toast({ icon: '🎉', title: t('onboarding.unlockedTitle'), text: t('onboarding.unlockedText'), duration: 5200 });
           return;
         }
+        if (consent) App.user = await DataService.giveSensitiveConsent();
         const patch = skip ? { bio: '' } : patchFor(step);
         App.user = await DataService.updateProfile({ ...patch, onboardingStep: idx + 1 });
         if (step === 'photos') App.user = await DataService.completeOnboarding();
         if (!ctx.alive) return;
+        // Wer schon Ideen hat (z. B. nach Widerruf der Einwilligung), braucht keine neue
+        if (step === 'photos' && App.user.firstIdeaCreated) { App.go('#/feed', { replace: true }); return; }
         UI.busy(btn, false);
         data._fromSteps = true;
         show(idx + 1);

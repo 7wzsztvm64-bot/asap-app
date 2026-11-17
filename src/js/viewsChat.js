@@ -171,6 +171,7 @@ const ChatView = {
         renderHeader(); renderPinned(); renderItems();
         msgs.scrollTop = msgs.scrollHeight;
         $$('[data-action="propose"], [data-action="safety"]', el).forEach(b => { b.disabled = false; });
+        sendBtn.disabled = !ta.value.trim(); // schon getippt, bevor der Chat geladen war
         DataService.markAsRead(matchId).then(() => App.refreshBadges()).catch(() => {});
       } catch (err) {
         if (!ctx.alive) return;

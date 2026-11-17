@@ -89,11 +89,11 @@ export async function createTestDb() {
     /** Konto anlegen wie bei der Registrierung (Trigger erzeugt das Profil) und Profil ausfüllen. */
     async createUser(id, profile = {}) {
       await helpers.asAdmin();
-      await db.query(`insert into auth.users (id) values ($1)`, [id]);
+      await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, '{"terms_version": "test"}')`, [id]);
       const p = { name: 'Test', birthdate: '1995-05-05', gender: 'frau', interested_in: ['mann'], city: 'Frankfurt-Nordend',
         interests: ['Kaffee', 'Kino', 'Wandern'], photos: [{ id: 'ph0', colors: ['#000', '#fff'], emoji: null, pattern: 1 }], profile_complete: true, ...profile };
       await db.query(`update public.profiles set name = $2, birthdate = $3, gender = $4, interested_in = $5, city = $6,
-        interests = $7, photos = $8, profile_complete = $9 where id = $1`,
+        interests = $7, photos = $8, profile_complete = $9, sensitive_consent_at = now() where id = $1`,
       [id, p.name, p.birthdate, p.gender, p.interested_in, p.city, p.interests, JSON.stringify(p.photos), p.profile_complete]);
     },
     async createIdea(id, ownerId, extra = {}) {

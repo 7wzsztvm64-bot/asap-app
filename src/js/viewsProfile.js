@@ -1,8 +1,8 @@
 import { Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
-import { $, $$, shortCity, toggleIn, bindSubmit, UI, PhotoUploads, App } from './uiCore.js';
+import { $, $$, shortCity, toggleIn, bindSubmit, UI, Legal, PhotoUploads, App } from './uiCore.js';
 import { IdeaForm } from './viewsAuth.js';
-import { t, getLang, setLang, LANGS } from '../i18n/index.js';
+import { t, getLang, setLang, LANGS, legalDoc } from '../i18n/index.js';
 
 /* =============================================================================
    ANSICHTEN: Eigenes Profil, Profil bearbeiten, Idee anlegen/bearbeiten
@@ -53,7 +53,12 @@ const ProfileView = {
         <div class="section-title">${t('privacy.title')}</div>
         <div class="settings-list">
           <button type="button" class="si" data-action="export">${icon('download', 20)}<span class="grow">${t('privacy.export')}</span></button>
+          ${me.sensitiveConsentAt ? html`<button type="button" class="si" data-action="withdraw-consent">${icon('eyeOff', 20)}<span class="grow">${t('consent.withdraw')}</span></button>` : ''}
           <button type="button" class="si danger" data-action="delete-account">${icon('trash', 20)}<span class="grow">${t('privacy.delete')}</span></button>
+        </div>
+        <div class="section-title">${t('legal.title')}</div>
+        <div class="settings-list">
+          ${['privacy', 'terms', 'imprint'].map(doc => html`<button type="button" class="si" data-legal="${doc}">${icon(doc === 'privacy' ? 'lock' : 'info', 20)}<span class="grow">${t('legal.' + doc)}</span>${icon('chevronRight', 18)}</button>`)}
         </div>
         <p class="foot-note">${t('profile.version')}<br>${t('profile.storage')}</p>`;
     }
@@ -105,6 +110,17 @@ const ProfileView = {
           return;
         }
         case 'delete-account': return openDeleteAccount();
+        case 'withdraw-consent': {
+          const ok = await UI.confirm({ icon: '🔒', title: t('consent.withdrawTitle'), text: t('consent.withdrawText'), confirmLabel: t('consent.withdrawConfirm'), danger: true });
+          if (!ok) return;
+          UI.busy(btn, true);
+          try {
+            App.user = await DataService.withdrawSensitiveConsent();
+            UI.toast({ icon: '🔒', title: t('consent.withdrawn'), text: t('consent.withdrawnText'), light: true, duration: 4200 });
+            App.go('#/onboarding', { replace: true });
+          } catch (err) { UI.busy(btn, false); UI.handleError(err); }
+          return;
+        }
         case 'toggle-idea': {
           const activate = btn.dataset.active !== '1';
           UI.busy(btn, true);
@@ -192,6 +208,7 @@ const ProfileEditView = {
         <div class="field" data-field="gender"><div class="chips">${GENDERS.map(g => html`<button type="button" class="chip ${st.gender === g.value ? 'is-on' : ''}" data-gender="${g.value}">${g.emoji} ${g.label}</button>`)}</div></div>
         <h4>${t('profile.interestedIn')}</h4>
         <div class="field" data-field="interestedIn"><div class="chips">${INTEREST_CHOICES.map(c => html`<button type="button" class="chip ${interestKey(st.interestedIn) === c.key ? 'is-on' : ''}" data-interest="${c.key}">${c.emoji} ${c.label}</button>`)}</div></div>
+        ${me.sensitiveConsentAt ? '' : UI.consentCheck()}
       </div>
       <div class="form-section"><h4>${t('profile.interests')} <span class="tag-count" style="text-transform:none;letter-spacing:0">${st.interests.length}/10</span></h4>
         <div class="field" data-field="interests"><div class="chips">${INTEREST_TAGS.map(tag => html`<button type="button" class="chip sm ${st.interests.includes(tag) ? 'is-on' : ''}" data-tag="${tag}">${Label.interest(tag)}</button>`)}</div></div>
@@ -234,8 +251,12 @@ const ProfileEditView = {
     saveBtn.addEventListener('click', async () => {
       if (UI.isBusy(saveBtn)) return;
       UI.clearErrors(form);
+      // Ältere Konten ohne Einwilligung: erst einwilligen, dann speichern
+      const consent = $('[name="sensitiveConsent"]', form);
+      if (consent && !consent.checked) return UI.fieldErrors(form, { consent: t('consent.required') });
       UI.busy(saveBtn, true);
       try {
+        if (consent) await DataService.giveSensitiveConsent();
         App.user = await DataService.updateProfile({ ...st });
         UI.toast({ icon: '✅', title: t('profile.saved'), light: true, duration: 2000 });
         App.back('#/profile');
@@ -428,4 +449,14 @@ const DevPanel = {
   },
 };
 
-export { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, DevPanel };
+/* ---------- Rechtstexte als eigene Seite (#/legal/privacy|terms|imprint), mit und ohne Login ---------- */
+const LegalView = {
+  async render(el, params) {
+    const doc = params[0];
+    el.innerHTML = html`<header class="topbar bordered"><button type="button" class="icon-btn back" data-action="back" data-fallback="${App.user ? '#/profile' : '#/login'}" aria-label="${t('common.back')}">${icon('back')}</button>
+      <div class="topbar-title sm">${legalDoc(doc).title}</div></header>
+      <div class="scroll"><div class="pad" style="padding-top:14px">${Legal.body(doc)}</div></div>`;
+  },
+};
+
+export { ProfileView, ProfileEditView, IdeaEditView, BlockedUsersView, PasswordView, LegalView, DevPanel };

@@ -1,0 +1,111 @@
+{
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "intro": "asap ist ein privates, nicht-kommerzielles Projekt in der Testphase (Beta). Hier steht, welche Daten wir verarbeiten, wozu und welche Rechte du hast. Stand: November 2026.",
+    "sections": [
+      { "h": "1. Verantwortlicher", "p": ["{name}, {address}", "E-Mail: {email}"] },
+      { "h": "2. Welche Daten wir verarbeiten", "li": [
+        "Konto: E-Mail-Adresse und Passwort (nur verschlüsselt gespeichert), Zeitpunkt der Registrierung und der letzten Anmeldung, Zustimmung zu den Nutzungsregeln.",
+        "Profil: Vorname, Geburtsdatum (andere sehen nur dein Alter), Geschlecht, Stadtteil oder Ort, Bio, Interessen, Platzhalter-Profilbilder und hochgeladene Fotos.",
+        "„Interessiert an“: welches Geschlecht du daten möchtest. Daraus kann sich deine sexuelle Orientierung ergeben – ein besonders geschütztes Datum (Art. 9 DSGVO). Wir speichern es nur mit deiner ausdrücklichen Einwilligung.",
+        "Inhalte und Aktivität: deine Date-Ideen, Likes und Anfragen mit Nachricht, übersprungene Ideen, Matches, Chat-Nachrichten, Terminvorschläge, Blockierungen und Meldungen.",
+        "Technische Daten: Beim Aufruf der App und bei jeder Anfrage an den Server werden IP-Adresse, Zeitpunkt und Browser-Angaben kurzzeitig in Server-Protokollen unserer Dienstleister verarbeitet."
+      ] },
+      { "h": "3. Zwecke und Rechtsgrundlagen", "li": [
+        "Bereitstellung der App (Konto, Profil, Feed, Matches, Chat, Termine): Vertrag über die Nutzung von asap, Art. 6 Abs. 1 lit. b DSGVO.",
+        "„Interessiert an“: damit wir dir nur Personen zeigen, die gegenseitig zu dir passen – ausdrückliche Einwilligung, Art. 9 Abs. 2 lit. a DSGVO.",
+        "Sicherheit und Moderation (Fotoprüfung, Meldungen, Blockieren, Obergrenzen gegen Spam, Server-Protokolle): berechtigtes Interesse an einer sicheren App, Art. 6 Abs. 1 lit. f DSGVO.",
+        "E-Mails zur Bestätigung deiner Adresse und zum Zurücksetzen des Passworts: Art. 6 Abs. 1 lit. b DSGVO. Werbe-Mails versenden wir nicht."
+      ] },
+      { "h": "4. Was andere Personen sehen", "p": [
+        "Andere angemeldete Personen sehen deinen Vornamen, dein Alter, Geschlecht, Stadtteil/Ort, Bio, Interessen, deine aktiven Date-Ideen und deine Profilbilder – echte Fotos erst, nachdem wir sie geprüft und freigegeben haben. Nicht sichtbar sind deine E-Mail-Adresse, dein Geburtsdatum und deine Angabe „Interessiert an“.",
+        "Chat-Nachrichten und Terminvorschläge sehen nur du und dein Match. Blockierte Personen sehen nichts mehr von dir."
+      ] },
+      { "h": "5. Entfernung und Standort", "p": [
+        "Die Entfernung zu anderen Personen berechnet die App aus dem Stadtteil oder Ort, den du im Profil angibst. Wir fragen keinen GPS-Standort ab."
+      ] },
+      { "h": "6. Fotos", "p": [
+        "Bevor ein Foto hochgeladen wird, verkleinert die App es auf deinem Gerät und entfernt dabei eingebettete Daten wie Aufnahmeort und Kameramodell. Neue Fotos prüft der Verantwortliche persönlich, bevor andere sie sehen. Abgelehnte Fotos sind nur für dich sichtbar, bis du sie löschst."
+      ] },
+      { "h": "7. Dienstleister (Auftragsverarbeiter)", "li": [
+        "Supabase Inc. (USA) – Datenbank, Anmeldung, Echtzeit-Chat und Foto-Speicher. Die Daten liegen in einem Rechenzentrum in Frankfurt am Main.",
+        "Netlify, Inc. (USA) – Auslieferung der App-Dateien (Webhosting).",
+        "Sendinblue SAS / Brevo (Frankreich) – Versand der Bestätigungs- und Passwort-Mails.",
+        "Mit allen Dienstleistern bestehen Verträge zur Auftragsverarbeitung (Art. 28 DSGVO). Soweit Daten in die USA übermittelt werden können, geschieht das auf Grundlage des EU-US Data Privacy Framework bzw. der Standardvertragsklauseln der EU-Kommission."
+      ] },
+      { "h": "8. Speicherdauer", "li": [
+        "Deine Daten speichern wir, bis du dein Konto löschst. Beim Löschen entfernen wir sofort Profil, Fotos, Ideen, Likes, Matches samt Chats und Termine.",
+        "Meldungen, die du abgegeben hast oder die dich betreffen, bleiben ohne Bezug zu deinem Konto erhalten, damit wir Missbrauch nachvollziehen können.",
+        "Sicherungskopien der Datenbank bewahren wir höchstens 30 Tage auf; danach sind auch dort gelöschte Daten entfernt.",
+        "Server-Protokolle löschen unsere Dienstleister nach kurzer Zeit, in der Regel nach wenigen Tagen."
+      ] },
+      { "h": "9. Speicherung auf deinem Gerät", "p": [
+        "asap setzt keine Cookies für Werbung oder Statistik und nutzt keine Tracking- oder Analyse-Dienste. Im Speicher deines Browsers liegen nur Daten, die für die Funktion nötig sind: deine Anmeldung, die Einstellung „Eingeloggt bleiben“ und die gewählte Sprache (§ 25 Abs. 2 Nr. 2 TDDDG)."
+      ] },
+      { "h": "10. Deine Rechte", "li": [
+        "Auskunft und Datenübertragbarkeit (Art. 15, 20 DSGVO): Profil → „Meine Daten herunterladen“.",
+        "Berichtigung (Art. 16): Profil → „Profil bearbeiten“.",
+        "Löschung (Art. 17): Profil → „Konto löschen“.",
+        "Widerruf deiner Einwilligung zu „Interessiert an“ (Art. 7 Abs. 3): Profil → „Einwilligung widerrufen“. Die Angabe wird gelöscht und dein Profil ist für andere nicht mehr sichtbar, bis du neu einwilligst. Der Widerruf gilt für die Zukunft.",
+        "Einschränkung der Verarbeitung (Art. 18) und Widerspruch gegen Verarbeitungen aus berechtigtem Interesse (Art. 21): per E-Mail an {email}.",
+        "Beschwerde bei einer Datenschutz-Aufsichtsbehörde (Art. 77), zum Beispiel bei der Behörde deines Wohnorts."
+      ] },
+      { "h": "11. Keine automatisierten Entscheidungen", "p": [
+        "Die Reihenfolge im Feed ergibt sich aus Entfernung, gemeinsamen Interessen und Aktualität. Es gibt keine automatisierten Entscheidungen mit rechtlicher Wirkung (Art. 22 DSGVO)."
+      ] },
+      { "h": "12. Mindestalter", "p": [
+        "asap ist nur für Personen ab 18 Jahren. Das Geburtsdatum wird beim Anlegen des Profils geprüft."
+      ] }
+    ]
+  },
+  "terms": {
+    "title": "Nutzungsregeln",
+    "intro": "asap ist ein kostenloses, privates Projekt in der Testphase. Mit der Registrierung stimmst du diesen Regeln zu. Stand: November 2026.",
+    "sections": [
+      { "h": "1. Wer mitmachen darf", "li": [
+        "Du bist mindestens 18 Jahre alt.",
+        "Du nutzt asap privat, um Menschen kennenzulernen – nicht für Werbung, Verkauf oder andere geschäftliche Zwecke.",
+        "Pro Person ein Konto. In der Testphase brauchst du für die Registrierung einen Einladungscode."
+      ] },
+      { "h": "2. Ehrliche Angaben", "li": [
+        "Dein Profil beschreibt dich selbst – keine falschen Namen, kein falsches Alter, keine Fake-Profile.",
+        "Lade nur Fotos hoch, auf denen du selbst zu sehen bist und an denen du die Rechte hast. Keine Nacktheit, keine Gewalt, keine anderen Personen ohne deren Einverständnis."
+      ] },
+      { "h": "3. Respektvoller Umgang", "li": [
+        "Keine Belästigung, Beleidigung, Drohungen, Hassrede oder Diskriminierung.",
+        "Keine sexuellen Inhalte ohne Einverständnis, kein Spam, keine Betrugsversuche, keine Links zu fremden Angeboten.",
+        "Ein „Nein“ oder keine Antwort ist eine Antwort."
+      ] },
+      { "h": "4. Melden, Blockieren, Moderation", "li": [
+        "Wenn sich jemand nicht an diese Regeln hält, melde die Person in der App. Mit dem Blockieren verschwindet sie für dich sofort.",
+        "Wir prüfen Meldungen und Fotos. Bei Verstößen können wir Inhalte entfernen und Konten sperren oder löschen.",
+        "Bei einer akuten Gefahr wende dich bitte an die Polizei (110)."
+      ] },
+      { "h": "5. Sicher treffen", "li": [
+        "Triff dich beim ersten Date an einem öffentlichen Ort und sag einer vertrauten Person Bescheid.",
+        "Gib keine Bank- oder Zugangsdaten weiter und überweise niemandem Geld.",
+        "asap prüft nicht die Identität der Nutzer:innen und ist nicht für das Verhalten anderer Personen beim Treffen verantwortlich."
+      ] },
+      { "h": "6. Testphase", "li": [
+        "asap ist noch in Entwicklung. Funktionen können sich ändern, Fehler auftreten oder der Dienst vorübergehend nicht erreichbar sein.",
+        "Die Testphase kann jederzeit enden. Wir informieren dich vorher per E-Mail, damit du deine Daten herunterladen kannst.",
+        "Für Schäden haften wir nur bei Vorsatz und grober Fahrlässigkeit sowie nach den zwingenden gesetzlichen Vorschriften."
+      ] },
+      { "h": "7. Konto beenden und Änderungen", "li": [
+        "Du kannst dein Konto jederzeit im Profil löschen.",
+        "Ändern sich diese Regeln wesentlich, bitten wir dich in der App um erneute Zustimmung."
+      ] },
+      { "h": "8. Kontakt", "p": ["Fragen und Hinweise an {email}."] }
+    ]
+  },
+  "imprint": {
+    "title": "Impressum",
+    "intro": "Privates, nicht-kommerzielles Projekt in der Testphase.",
+    "sections": [
+      { "h": "Angaben gemäß § 5 DDG", "p": ["{name}", "{address}"] },
+      { "h": "Kontakt", "p": ["E-Mail: {email}"] },
+      { "h": "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV", "p": ["{name}, Anschrift wie oben"] },
+      { "h": "Inhalte der Nutzer:innen", "p": ["Profile, Ideen und Nachrichten stammen von den Nutzer:innen selbst. Rechtsverletzende Inhalte entfernen wir, sobald wir davon erfahren – bitte melde sie in der App oder per E-Mail."] }
+    ]
+  }
+}
