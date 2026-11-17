@@ -21,7 +21,7 @@ const FeedView = {
         <div class="deck"></div>
         <div class="deck-actions">
           <button type="button" class="round-btn pass" data-action="pass" aria-label="${t('feed.passAria')}">${icon('close', 26, 2.4)}</button>
-          <button type="button" class="round-btn msg" data-action="comment" aria-label="${t('feed.commentAria')}">${icon('chat', 20)}</button>
+          <button type="button" class="round-btn comment" data-action="comment" aria-label="${t('feed.commentAria')}">${icon('chat', 20)}</button>
           <button type="button" class="round-btn like" data-action="like" aria-label="${t('feed.likeAria')}">${icon('heartFill', 22)} ${t('feed.like')}</button>
         </div>
       </div>`;
