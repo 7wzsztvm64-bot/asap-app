@@ -497,7 +497,7 @@ img,svg{display:block}
 .chat-head .who{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;padding:4px;border-radius:14px}
 .chat-head .who:hover{background:rgba(42,26,31,.04)}
 .chat-head .wn{font-weight:780;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chat-head .ws{font-size:12.5px;color:var(--ink-3)}
+.chat-head .ws{font-size:12.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chat-head .ws.is-typing{color:var(--primary-600);font-weight:650}
 .pinned{flex:none;margin:0 12px 6px;padding:10px 12px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow-1);display:flex;gap:11px;align-items:center;text-align:left;width:calc(100% - 24px);position:relative;z-index:3}
 .pinned .pk{font-size:10.5px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:var(--primary-600);display:flex;gap:6px;align-items:center}
@@ -742,3 +742,14 @@ svg{flex-shrink:0}
 .consent-field{margin-top:14px}
 .auth-legal{text-align:center;font-size:12.5px;color:var(--ink-3);margin:10px 0 0}
 .auth-legal .link-btn{font-size:inherit;color:var(--ink-3);font-weight:600}
+
+/* ---------- Kleine bzw. niedrige Bildschirme (iPhone SE, Querformat, eingeblendete Browser-Leisten) ---------- */
+@media (max-height:700px){
+  .auth-hero{padding:18px 0 4px}
+  .auth-hero .floaters{display:none}  /* Formular ohne Scrollen erreichbar */
+}
+@media (max-width:380px){
+  .auth-row{font-size:13.5px;gap:8px 12px;flex-wrap:wrap}
+  .auth-row .check{font-size:13.5px;gap:8px;white-space:nowrap}
+  .auth-row .link-btn{white-space:nowrap}
+}
