@@ -8,14 +8,17 @@
      npm run db:seed                 – Testpersonen (@datedate.app, Passwort Test1234) neu anlegen
      npm run db:auth                 – Auth-Einstellungen aus supabase/auth/ (+ SMTP aus .env) übernehmen
      npm run db:invite -- list | create 20 "Notiz" | required on|off   – Einladungscodes der Beta (#22)
+     npm run db:backup               – alle Daten + Fotos nach ~/asap-backups/<dev|prod>/ (30 Tage) (#25)
+     npm run db:restore-check -- <Ordner>  – Backup testweise in eine lokale Datenbank einspielen und vergleichen
 
    Ziel ist das Test-/Entwicklungsprojekt aus .env. Mit --prod (z. B. npm run db:migrate -- --prod)
    geht alles ans Produktionsprojekt aus .env.prod (#20) – dort sind Testdaten (db:seed) gesperrt.
 
    Welche Migrationen schon drin sind, steht wie bei der Supabase CLI in
    supabase_migrations.schema_migrations – ein späterer Wechsel zur CLI bleibt also möglich. */
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { homedir } from 'node:os';
 
 const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'supabase', 'migrations');
 
@@ -75,6 +78,15 @@ async function migrate() {
   }
 }
 
+/* Secret-Key für die Storage-API – nur für den jeweiligen Aufruf über die Management-API geholt, nie gespeichert */
+async function secretKey() {
+  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/api-keys?reveal=true`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`API-Keys: HTTP ${res.status}`);
+  const secret = (await res.json()).find(k => k.type === 'secret')?.api_key;
+  if (!secret) throw new Error('Kein Secret-Key im Projekt gefunden (Dashboard → Settings → API Keys).');
+  return secret;
+}
+
 /* Foto-Dateien der Testkonten löschen. Per SQL lässt Supabase das nicht zu (siehe Migration photos.sql),
    daher über die Storage-API mit dem Secret-Key – der wird nur für diesen Aufruf über die
    Management-API geholt und nirgends gespeichert. */
@@ -82,10 +94,7 @@ async function removeSeedPhotos() {
   const files = (await query(`select o.name from storage.objects o join auth.users u on (storage.foldername(o.name))[1] = u.id::text
     where o.bucket_id = 'photos' and u.email like '%@datedate.app'`)).map(r => r.name);
   if (!files.length) return;
-  const keys = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/api-keys?reveal=true`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!keys.ok) throw new Error(`API-Keys: HTTP ${keys.status}`);
-  const secret = (await keys.json()).find(k => k.type === 'secret')?.api_key;
-  if (!secret) throw new Error('Kein Secret-Key im Projekt gefunden (Dashboard → Settings → API Keys).');
+  const secret = await secretKey();
   const res = await fetch(`${process.env.VITE_SUPABASE_URL}/storage/v1/object/photos`, {
     method: 'DELETE',
     headers: { apikey: secret, 'Content-Type': 'application/json' },
@@ -177,6 +186,96 @@ async function applyAuthConfig() {
     + `Mailversand: ${body.smtp_host ? `${body.smtp_host} als ${body.smtp_admin_email}` : 'Supabase-Standard (nur Team-Adressen, 2/Std.)'})`);
 }
 
+/* ---------- Backups (#25) ----------
+   Free-Projekte haben keine automatischen Backups. Gesichert werden alle Tabellen der Schemas public und
+   moderation, die Konten (auth.users/identities – inkl. Passwort-Hashes, damit Logins wiederherstellbar sind)
+   und alle Foto-Dateien. Ablage außerhalb des Repos; Backups älter als 30 Tage werden gelöscht
+   (so steht es in der Datenschutzerklärung). Die Ordner enthalten personenbezogene Daten – nur auf dem
+   verschlüsselten Mac (FileVault) aufbewahren, nicht in Cloud-Ordner legen. */
+const BACKUP_DAYS = 30;
+const AUTH_TABLES = ['auth.users', 'auth.identities'];
+
+async function backupTables() {
+  const rows = await query(`select table_schema || '.' || table_name as t from information_schema.tables
+    where table_type = 'BASE TABLE' and table_schema in ('public', 'moderation') order by 1`);
+  return [...AUTH_TABLES, ...rows.map(r => r.t)];
+}
+
+async function backup() {
+  const env = PROD ? 'prod' : 'dev';
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+  const root = join(homedir(), 'asap-backups', env);
+  const dir = join(root, stamp);
+  mkdirSync(join(dir, 'photos'), { recursive: true });
+
+  const tables = {};
+  for (const t of await backupTables()) {
+    tables[t] = (await query(`select coalesce(jsonb_agg(to_jsonb(x)), '[]') as rows from ${t} x`))[0].rows;
+  }
+  const migrations = (await query('select version from supabase_migrations.schema_migrations order by 1')).map(r => r.version);
+
+  // Fotos über die Storage-API herunterladen
+  const files = (await query(`select name from storage.objects where bucket_id = 'photos' order by name`)).map(r => r.name);
+  if (files.length) {
+    const secret = await secretKey();
+    for (const name of files) {
+      const res = await fetch(`${process.env.VITE_SUPABASE_URL}/storage/v1/object/photos/${name}`, { headers: { apikey: secret, Authorization: `Bearer ${secret}` } });
+      if (!res.ok) throw new Error(`Foto ${name}: HTTP ${res.status}`);
+      mkdirSync(dirname(join(dir, 'photos', name)), { recursive: true });
+      writeFileSync(join(dir, 'photos', name), Buffer.from(await res.arrayBuffer()));
+    }
+  }
+  writeFileSync(join(dir, 'backup.json'), JSON.stringify({ createdAt: new Date().toISOString(), project: projectRef, env, migrations, tables }));
+
+  // Alte Backups aufräumen
+  const cutoff = Date.now() - BACKUP_DAYS * 86400000;
+  for (const old of readdirSync(root)) {
+    const at = Date.parse(old.replace('_', 'T').replace(/-(\d\d)$/, ':$1') + 'Z');
+    if (at && at < cutoff) { rmSync(join(root, old), { recursive: true, force: true }); console.log(`  alt, gelöscht: ${old}`); }
+  }
+  const counts = Object.entries(tables).map(([t, r]) => `${t.replace(/^public\./, '')} ${r.length}`).join(', ');
+  console.log(`✔ Backup: ${dir}\n  ${counts}, Fotos ${files.length}`);
+}
+
+/** SQL, das ein Backup in eine Datenbank mit demselben Schema einspielt (Trigger und Fremdschlüssel aus). */
+function restoreSql(data, existing) {
+  const lit = v => `'${String(v).replace(/'/g, "''")}'`;
+  const parts = ['set session_replication_role = replica;'];
+  for (const [t, rows] of Object.entries(data.tables)) {
+    if (!rows.length || (existing && !existing.has(t))) continue;
+    parts.push(`insert into ${t} select * from jsonb_populate_recordset(null::${t}, ${lit(JSON.stringify(rows))}::jsonb) on conflict do nothing;`);
+  }
+  parts.push('set session_replication_role = origin;');
+  return parts.join('\n');
+}
+
+/* Backup in eine leere lokale Test-Datenbank (PGlite, alle Migrationen) einspielen und Zeilen vergleichen.
+   Beweist, dass das Backup vollständig und wieder einspielbar ist – ohne ein echtes Projekt anzufassen. */
+async function restoreCheck(dir) {
+  if (!dir || !existsSync(join(dir, 'backup.json'))) throw new Error('Aufruf: npm run db:restore-check -- <Backup-Ordner mit backup.json>');
+  const data = JSON.parse(readFileSync(join(dir, 'backup.json'), 'utf8'));
+  const { createTestDb } = await import('../supabase/tests/setup.mjs');
+  const t = await createTestDb();
+  const local = new Set((await t.rows(`select table_schema || '.' || table_name as t from information_schema.tables
+    where table_type = 'BASE TABLE' and table_schema in ('auth', 'public', 'moderation')`)).map(r => r.t));
+  // moderation.config hat schon eine Zeile aus der Migration – durch die gesicherte ersetzen
+  await t.db.exec('delete from moderation.config');
+  await t.db.exec(restoreSql(data, local));
+  let ok = true;
+  for (const [table, rows] of Object.entries(data.tables)) {
+    if (!local.has(table)) { console.log(`  – ${table}: in der Test-Datenbank nicht vorhanden (nur bei Supabase), übersprungen`); continue; }
+    const n = Number((await t.one(`select count(*) as n from ${table}`)).n);
+    const same = n === rows.length;
+    ok &&= same;
+    console.log(`  ${same ? '✔' : '✖'} ${table}: ${n} / ${rows.length}`);
+  }
+  const photos = data.tables['public.photos'] || [];
+  const missing = photos.filter(p => !existsSync(join(dir, 'photos', p.path)));
+  console.log(`  ${missing.length ? '✖' : '✔'} Foto-Dateien: ${photos.length - missing.length} / ${photos.length}`);
+  if (!ok || missing.length) throw new Error('Backup unvollständig – siehe oben.');
+  console.log(`✔ Backup vom ${data.createdAt} lässt sich vollständig einspielen (Migrationen bis ${data.migrations.at(-1)}).`);
+}
+
 /* Einladungscodes (#22): auflisten, neu anlegen, Pflicht an/aus */
 async function invite([action, arg1, arg2]) {
   if (action === 'list' || !action) {
@@ -206,6 +305,8 @@ const [command, sql, ...rest] = process.argv.slice(2).filter(a => !a.startsWith(
 try {
   if (command === 'migrate') await migrate();
   else if (command === 'invite') await invite([sql, ...rest]);
+  else if (command === 'backup') await backup();
+  else if (command === 'restore-check') await restoreCheck(sql);
   else if (command === 'seed') await seed();
   else if (command === 'auth') await applyAuthConfig();
   else if (command === 'query' && sql) {

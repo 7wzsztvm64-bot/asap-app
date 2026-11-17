@@ -15,7 +15,9 @@
     "db:seed": "node scripts/db.mjs seed",
     "dev:lan": "vite --host",
     "db:auth": "node scripts/db.mjs auth",
-    "db:invite": "node scripts/db.mjs invite"
+    "db:invite": "node scripts/db.mjs invite",
+    "db:backup": "node scripts/db.mjs backup",
+    "db:restore-check": "node scripts/db.mjs restore-check"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.11",
