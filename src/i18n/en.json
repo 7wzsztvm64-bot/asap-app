@@ -129,7 +129,8 @@
     "PHOTO_UPLOAD": "The photo could not be uploaded. Please try again.",
     "INVITE_INVALID": "This invite code is invalid or already used up.",
     "CONSENT_REQUIRED": "Please first consent to us storing “interested in”.",
-    "TERMS_REQUIRED": "Please accept the community rules."
+    "TERMS_REQUIRED": "Please accept the community rules.",
+    "FEEDBACK_LIMIT": "You have sent a lot of feedback today – thank you! You can send more tomorrow."
   },
   "validation": {
     "email": "Please enter a valid email address.",
@@ -240,7 +241,7 @@
     "toLogin": "Go to login"
   },
   "profile": {
-    "version": "asap · development version",
+    "version": "asap · Version {version}",
     "storage": "Your data is stored on the asap server (Supabase, Frankfurt).",
     "previewAria": "Profile preview",
     "edit": "Edit profile",
@@ -727,5 +728,16 @@
     "withdrawConfirm": "Withdraw",
     "withdrawn": "Consent withdrawn",
     "withdrawnText": "Your profile is now hidden. You can set “interested in” again here."
+  },
+  "feedback": {
+    "title": "Give feedback",
+    "subtitle": "What do you like, what annoys you, what is missing?",
+    "label": "Your feedback",
+    "placeholder": "e.g. “When liking, it sometimes hangs …”",
+    "hint": "The app version ({version}) and device type are sent along so we can find bugs. Please no sensitive data about other people.",
+    "send": "Send",
+    "thanks": "Thanks for your feedback!",
+    "thanksText": "We read everything.",
+    "tooShort": "Please write a few words."
   }
 }

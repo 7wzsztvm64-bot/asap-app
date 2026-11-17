@@ -8,6 +8,10 @@ import { t, tOr, getLang } from '../i18n/index.js';
 /* =============================================================================
    1) HILFSFUNKTIONEN
    ============================================================================= */
+/** App-Version (aus vite.config.js: package.json + Commit) */
+// eslint-disable-next-line no-undef
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+
 const Util = {
   uid(prefix = 'id') {
     return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -346,4 +350,4 @@ class ApiError extends Error {
   }
 }
 
-export { Util, SafeHtml, escapeHtml, raw, renderValue, html, Fmt, ICONS, icon, __logoSeq, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIMES, TIME, DURATIONS, GENDERS, GENDER, INTEREST_CHOICES, Label, interestKey, PLACES, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, SafeStorage, ApiError };
+export { APP_VERSION, Util, SafeHtml, escapeHtml, raw, renderValue, html, Fmt, ICONS, icon, __logoSeq, logoMark, logo, CATEGORIES, CAT, BUDGETS, TIMES, TIME, DURATIONS, GENDERS, GENDER, INTEREST_CHOICES, Label, interestKey, PLACES, CITY_NAMES, INTEREST_TAGS, IDEA_EMOJIS, PHOTO_PRESETS, SafeStorage, ApiError };

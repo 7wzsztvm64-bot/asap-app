@@ -1,4 +1,4 @@
-import { Util, ApiError } from './core.js';
+import { APP_VERSION, Util, ApiError } from './core.js';
 import { t, LEGAL_VERSION } from '../i18n/index.js';
 import { supabase, setRememberSession, checkSupabaseHealth } from './supabase.js';
 // Nur für die Entwickler-Funktionen; im Produktionsbuild entfernt Vite den Import (siehe api.dev)
@@ -182,6 +182,16 @@ const DataService = (() => {
     b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
     const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
+
+  /** Grober Gerätetyp für Feedback (z. B. „iOS · Safari · App“) – bewusst kein vollständiger User-Agent */
+  function deviceLabel() {
+    const ua = navigator.userAgent;
+    const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'macOS'
+      : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : '?';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Chrome|CriOS/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : '?';
+    const app = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone ? ' · App' : '';
+    return `${os} · ${browser}${app}`;
   }
 
   /* ---------- Laden ---------- */
@@ -827,6 +837,16 @@ const DataService = (() => {
       return request('rpc.get_blocked_users', async () => {
         const rows = await rpc('get_blocked_users');
         return rows.map(r => ({ id: r.id, name: r.name, photos: r.photo ? [r.photo] : [], blockedAt: ms(r.blocked_at) }));
+      });
+    },
+
+    /* ----- Feedback (Beta) ----- */
+    sendFeedback(text) {
+      return request('feedback.insert', async () => {
+        const msg = String(text || '').trim();
+        if (msg.length < 3) throw validationError({ feedback: t('feedback.tooShort') });
+        unwrap(await supabase.from('feedback').insert({ user_id: await myId(), text: msg.slice(0, 2000), app_version: APP_VERSION, device: deviceLabel() }));
+        return true;
       });
     },
 

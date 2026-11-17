@@ -129,7 +129,8 @@
     "PHOTO_UPLOAD": "Das Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal.",
     "INVITE_INVALID": "Dieser Einladungscode ist ungültig oder schon aufgebraucht.",
     "CONSENT_REQUIRED": "Bitte willige zuerst ein, dass wir „Interessiert an“ speichern dürfen.",
-    "TERMS_REQUIRED": "Bitte stimme den Nutzungsregeln zu."
+    "TERMS_REQUIRED": "Bitte stimme den Nutzungsregeln zu.",
+    "FEEDBACK_LIMIT": "Du hast heute schon viel Feedback geschickt – danke! Morgen geht es weiter."
   },
   "validation": {
     "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -240,7 +241,7 @@
     "toLogin": "Zur Anmeldung"
   },
   "profile": {
-    "version": "asap · Entwicklungsversion",
+    "version": "asap · Version {version}",
     "storage": "Deine Daten liegen auf dem asap-Server (Supabase, Frankfurt).",
     "previewAria": "Profil-Vorschau",
     "edit": "Profil bearbeiten",
@@ -727,5 +728,16 @@
     "withdrawConfirm": "Widerrufen",
     "withdrawn": "Einwilligung widerrufen",
     "withdrawnText": "Dein Profil ist jetzt unsichtbar. Du kannst „Interessiert an“ hier neu angeben."
+  },
+  "feedback": {
+    "title": "Feedback geben",
+    "subtitle": "Was gefällt dir, was nervt, was fehlt?",
+    "label": "Dein Feedback",
+    "placeholder": "z. B. „Beim Liken hängt manchmal …“",
+    "hint": "Mitgeschickt werden App-Version ({version}) und Gerätetyp, damit wir Fehler finden. Bitte keine sensiblen Daten anderer Personen.",
+    "send": "Senden",
+    "thanks": "Danke für dein Feedback!",
+    "thanksText": "Wir lesen alles.",
+    "tooShort": "Schreib uns bitte ein paar Worte."
   }
 }

@@ -173,6 +173,20 @@ test('Einwilligung „Interessiert an“: widerrufen → Onboarding → neu einw
   assert.deepEqual(p, { profile_complete: true, consent: true, interested_in: ['frau'] });
 });
 
+test('Feedback aus der App landet im Dashboard', { timeout: 30000 }, async () => {
+  const { mia } = pages;
+  const text = `E2E-Feedback ${Date.now()}`;
+  await go(mia, '#/profile', 'profile');
+  await view(mia).locator('[data-action="feedback"]').click();
+  await mia.locator('.sheet textarea').fill(text);
+  await mia.locator('.sheet [data-send]').click();
+  await mia.locator('.sheet').waitFor({ state: 'detached' });
+  const [row] = JSON.parse(db('query', `select user_name, device, app_version from moderation.feedback_inbox where text = '${text}'`, '--json'));
+  assert.equal(row.user_name, 'Mia');
+  assert.match(row.device, /· Chrome/);
+  assert.match(row.app_version, /^\d+\.\d+\.\d+\+/);
+});
+
 test('Keine JavaScript-Fehler in den Seiten', () => {
   assert.deepEqual(pageErrors, []);
 });

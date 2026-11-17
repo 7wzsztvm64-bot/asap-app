@@ -97,3 +97,29 @@ test('Einwilligung widerrufen: Angabe gelöscht, Profil für andere unsichtbar b
   await t.as(B);
   assert.equal((await t.rows(`select id from public.get_public_profiles($1)`, [[A]])).length, 0, 'unsichtbar');
 });
+
+/* ---------- #26 Feedback ---------- */
+test('Feedback: nur im eigenen Namen anlegen, nicht lesbar, 10 pro Tag, im Export, mit dem Konto gelöscht', async () => {
+  const A = uid(30), B = uid(31);
+  await t.createUser(A, { name: 'Ada' });
+  await t.createUser(B, { name: 'Ben', gender: 'mann', interested_in: ['frau'] });
+  await t.as(A);
+  await t.db.query(`insert into public.feedback (user_id, text, app_version, device) values ($1, 'Tolle Idee!', '0.1.0+abc', 'iOS · Safari')`, [A]);
+  await assert.rejects(t.db.query(`insert into public.feedback (user_id, text) values ($1, 'Im Namen von Ben')`, [B]), DENIED);
+  await assert.rejects(t.db.query(`select * from public.feedback`), DENIED);
+  await assert.rejects(t.db.query(`update public.feedback set status = 'done'`), DENIED);
+  await assert.rejects(t.db.query(`insert into public.feedback (user_id, text) values ($1, 'x')`, [A]), /check/, 'zu kurz');
+  for (let i = 0; i < 9; i++) await t.db.query(`insert into public.feedback (user_id, text) values ($1, $2)`, [A, `Feedback ${i}`]);
+  await assert.rejects(t.db.query(`insert into public.feedback (user_id, text) values ($1, 'Nummer elf')`, [A]), /FEEDBACK_LIMIT/);
+
+  const { d } = await t.one(`select public.export_my_data() as d`);
+  assert.equal(d.feedback.length, 10);
+  assert.equal(d.feedback[0].device, 'iOS · Safari');
+
+  await t.asAdmin();
+  assert.equal((await t.rows(`select * from moderation.feedback_inbox where user_name = 'Ada'`)).length, 10);
+  await t.as(A);
+  await t.db.query(`select public.delete_my_account()`);
+  await t.asAdmin();
+  assert.equal((await t.rows(`select 1 from public.feedback where user_id = $1`, [A])).length, 0);
+});

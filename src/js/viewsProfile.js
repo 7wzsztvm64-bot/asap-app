@@ -1,4 +1,4 @@
-import { Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, PHOTO_PRESETS, Label } from './core.js';
+import { APP_VERSION, Util, raw, html, icon, GENDERS, GENDER, INTEREST_CHOICES, interestKey, CITY_NAMES, INTEREST_TAGS, PHOTO_PRESETS, Label } from './core.js';
 import { DataService } from './dataService.js';
 import { $, $$, shortCity, toggleIn, bindSubmit, UI, Legal, PhotoUploads, App } from './uiCore.js';
 import { IdeaForm } from './viewsAuth.js';
@@ -45,6 +45,7 @@ const ProfileView = {
         <div class="settings-list">
           <div class="si">${icon('mail', 20)}<span class="grow">${t('auth.email')}</span><span class="val">${me.email}</span></div>
           <button type="button" class="si" data-go="#/password">${icon('lock', 20)}<span class="grow">${t('password.change')}</span>${icon('chevronRight', 18)}</button>
+          <button type="button" class="si" data-action="feedback">${icon('chat', 20)}<span class="grow">${t('feedback.title')}</span>${icon('chevronRight', 18)}</button>
           <button type="button" class="si" data-go="#/profile/blocked">${icon('ban', 20)}<span class="grow">${t('blocked.title')}</span>${icon('chevronRight', 18)}</button>
           <div class="si">🌐<span class="grow">${t('lang.label')}</span><span class="seg" style="flex:none">${LANGS.map(l => html`<button type="button" class="${l === getLang() ? 'is-on' : ''}" data-lang="${l}" aria-pressed="${l === getLang()}">${t('lang.' + l)}</button>`)}</span></div>
           ${DevPanel.enabled ? html`<button type="button" class="si" data-action="dev">${icon('gear', 20)}<span class="grow">${t('dev.title')}</span>${icon('chevronRight', 18)}</button>` : ''}
@@ -60,7 +61,7 @@ const ProfileView = {
         <div class="settings-list">
           ${['privacy', 'terms', 'imprint'].map(doc => html`<button type="button" class="si" data-legal="${doc}">${icon(doc === 'privacy' ? 'lock' : 'info', 20)}<span class="grow">${t('legal.' + doc)}</span>${icon('chevronRight', 18)}</button>`)}
         </div>
-        <p class="foot-note">${t('profile.version')}<br>${t('profile.storage')}</p>`;
+        <p class="foot-note">${t('profile.version', { version: APP_VERSION })}<br>${t('profile.storage')}</p>`;
     }
     async function load(silent = false) {
       try {
@@ -110,6 +111,7 @@ const ProfileView = {
           return;
         }
         case 'delete-account': return openDeleteAccount();
+        case 'feedback': return openFeedback();
         case 'withdraw-consent': {
           const ok = await UI.confirm({ icon: '🔒', title: t('consent.withdrawTitle'), text: t('consent.withdrawText'), confirmLabel: t('consent.withdrawConfirm'), danger: true });
           if (!ok) return;
@@ -173,6 +175,32 @@ const ProfileView = {
     await load();
   },
 };
+
+/* ---------- Feedback geben (Beta, #26) ---------- */
+function openFeedback() {
+  UI.sheet({
+    title: t('feedback.title'), subtitle: t('feedback.subtitle'),
+    body: html`<div class="field" data-field="feedback"><label class="label" for="fb-text">${t('feedback.label')} <span class="count">0/2000</span></label>
+      <textarea id="fb-text" class="textarea" maxlength="2000" style="min-height:140px" placeholder="${t('feedback.placeholder')}"></textarea></div>
+      <p class="hint">${t('feedback.hint', { version: APP_VERSION })}</p>`,
+    foot: html`<button type="button" class="btn btn-secondary" data-close>${t('common.cancel')}</button><button type="button" class="btn btn-primary" style="flex:1" data-send>${icon('send', 17)} ${t('feedback.send')}</button>`,
+    onMount(sheet, close) {
+      const ta = $('textarea', sheet);
+      ta.addEventListener('input', () => { $('.count', sheet).textContent = `${ta.value.length}/2000`; });
+      $('[data-send]', sheet).addEventListener('click', async e => {
+        const btn = e.currentTarget;
+        if (UI.isBusy(btn)) return;
+        UI.busy(btn, true);
+        try {
+          await DataService.sendFeedback(ta.value);
+          close();
+          UI.toast({ icon: '💌', title: t('feedback.thanks'), text: t('feedback.thanksText'), light: true, duration: 3200 });
+        } catch (err) { UI.busy(btn, false); UI.handleError(err, $('.sheet-body', sheet)); }
+      });
+      setTimeout(() => ta.focus(), 250);
+    },
+  });
+}
 
 const ProfileEditView = {
   async render(el, params, ctx) {

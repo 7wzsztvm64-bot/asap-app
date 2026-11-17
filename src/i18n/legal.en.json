@@ -3,109 +3,197 @@
     "title": "Privacy policy",
     "intro": "asap is a private, non-commercial project in its test phase (beta). This page explains which data we process, why, and what rights you have. The German version is legally binding. Last updated: November 2026.",
     "sections": [
-      { "h": "1. Controller", "p": ["{name}, {address}", "Email: {email}"] },
-      { "h": "2. What data we process", "li": [
-        "Account: email address and password (stored encrypted only), time of registration and last sign-in, your acceptance of the community rules.",
-        "Profile: first name, date of birth (others only see your age), gender, district or town, bio, interests, placeholder pictures and uploaded photos.",
-        "“Interested in”: which gender you want to date. This may reveal your sexual orientation – specially protected data (Art. 9 GDPR). We only store it with your explicit consent.",
-        "Content and activity: your date ideas, likes and requests with message, skipped ideas, matches, chat messages, date proposals, blocks and reports.",
-        "Technical data: when you open the app and with every request to the server, IP address, time and browser details are briefly processed in our service providers’ server logs."
-      ] },
-      { "h": "3. Purposes and legal bases", "li": [
-        "Providing the app (account, profile, feed, matches, chat, dates): contract for using asap, Art. 6(1)(b) GDPR.",
-        "“Interested in”: so we only show you people who mutually match – explicit consent, Art. 9(2)(a) GDPR.",
-        "Safety and moderation (photo review, reports, blocking, anti-spam limits, server logs): legitimate interest in a safe app, Art. 6(1)(f) GDPR.",
-        "Emails to confirm your address and to reset your password: Art. 6(1)(b) GDPR. We do not send marketing emails."
-      ] },
-      { "h": "4. What other people see", "p": [
-        "Other signed-in people see your first name, age, gender, district/town, bio, interests, your active date ideas and your profile pictures – real photos only after we have reviewed and approved them. Your email address, date of birth and “interested in” are not visible.",
-        "Chat messages and date proposals are only visible to you and your match. People you block no longer see anything from you."
-      ] },
-      { "h": "5. Distance and location", "p": [
-        "The app calculates the distance to other people from the district or town in your profile. We never ask for your GPS location."
-      ] },
-      { "h": "6. Photos", "p": [
-        "Before a photo is uploaded, the app shrinks it on your device and removes embedded data such as location and camera model. The controller personally reviews new photos before others can see them. Rejected photos are only visible to you until you delete them."
-      ] },
-      { "h": "7. Service providers (processors)", "li": [
-        "Supabase Inc. (USA) – database, sign-in, real-time chat and photo storage. The data is stored in a data centre in Frankfurt am Main.",
-        "Netlify, Inc. (USA) – delivery of the app files (web hosting).",
-        "Sendinblue SAS / Brevo (France) – sending confirmation and password emails.",
-        "Data processing agreements (Art. 28 GDPR) are in place with all providers. Where data may be transferred to the USA, this is based on the EU-US Data Privacy Framework or the European Commission’s standard contractual clauses."
-      ] },
-      { "h": "8. Retention", "li": [
-        "We keep your data until you delete your account. On deletion we immediately remove your profile, photos, ideas, likes, matches including chats, and dates.",
-        "Reports you made or that concern you are kept without any link to your account so that we can trace abuse.",
-        "Database backups are kept for at most 30 days; after that, deleted data is gone from them as well.",
-        "Our providers delete server logs after a short time, usually within a few days."
-      ] },
-      { "h": "9. Storage on your device", "p": [
-        "asap uses no advertising or statistics cookies and no tracking or analytics services. Your browser only stores what the app needs to work: your sign-in, the “Stay signed in” setting and your chosen language (§ 25(2) no. 2 TDDDG)."
-      ] },
-      { "h": "10. Your rights", "li": [
-        "Access and data portability (Art. 15, 20 GDPR): Profile → “Download my data”.",
-        "Rectification (Art. 16): Profile → “Edit profile”.",
-        "Erasure (Art. 17): Profile → “Delete account”.",
-        "Withdrawing your consent for “interested in” (Art. 7(3)): Profile → “Withdraw consent”. The information is deleted and your profile is hidden from others until you consent again. Withdrawal applies to the future.",
-        "Restriction of processing (Art. 18) and objection to processing based on legitimate interest (Art. 21): by email to {email}.",
-        "Complaint to a data protection supervisory authority (Art. 77), for example the one where you live."
-      ] },
-      { "h": "11. No automated decisions", "p": [
-        "The order of the feed is based on distance, shared interests and recency. There are no automated decisions with legal effect (Art. 22 GDPR)."
-      ] },
-      { "h": "12. Minimum age", "p": [
-        "asap is only for people aged 18 and over. Your date of birth is checked when you create your profile."
-      ] }
+      {
+        "h": "1. Controller",
+        "p": [
+          "{name}, {address}",
+          "Email: {email}"
+        ]
+      },
+      {
+        "h": "2. What data we process",
+        "li": [
+          "Account: email address and password (stored encrypted only), time of registration and last sign-in, your acceptance of the community rules.",
+          "Profile: first name, date of birth (others only see your age), gender, district or town, bio, interests, placeholder pictures and uploaded photos.",
+          "“Interested in”: which gender you want to date. This may reveal your sexual orientation – specially protected data (Art. 9 GDPR). We only store it with your explicit consent.",
+          "Content and activity: your date ideas, likes and requests with message, skipped ideas, matches, chat messages, date proposals, blocks and reports.",
+          "Feedback: what you send via “Give feedback”, together with the app version and a rough device type (e.g. “iOS · Safari”).",
+          "Technical data: when you open the app and with every request to the server, IP address, time and browser details are briefly processed in our service providers’ server logs."
+        ]
+      },
+      {
+        "h": "3. Purposes and legal bases",
+        "li": [
+          "Providing the app (account, profile, feed, matches, chat, dates): contract for using asap, Art. 6(1)(b) GDPR.",
+          "“Interested in”: so we only show you people who mutually match – explicit consent, Art. 9(2)(a) GDPR.",
+          "Safety and moderation (photo review, reports, blocking, anti-spam limits, server logs): legitimate interest in a safe app, Art. 6(1)(f) GDPR.",
+          "Evaluating feedback and fixing bugs: legitimate interest in a working app, Art. 6(1)(f) GDPR.",
+          "Emails to confirm your address and to reset your password: Art. 6(1)(b) GDPR. We do not send marketing emails."
+        ]
+      },
+      {
+        "h": "4. What other people see",
+        "p": [
+          "Other signed-in people see your first name, age, gender, district/town, bio, interests, your active date ideas and your profile pictures – real photos only after we have reviewed and approved them. Your email address, date of birth and “interested in” are not visible.",
+          "Chat messages and date proposals are only visible to you and your match. People you block no longer see anything from you."
+        ]
+      },
+      {
+        "h": "5. Distance and location",
+        "p": [
+          "The app calculates the distance to other people from the district or town in your profile. We never ask for your GPS location."
+        ]
+      },
+      {
+        "h": "6. Photos",
+        "p": [
+          "Before a photo is uploaded, the app shrinks it on your device and removes embedded data such as location and camera model. The controller personally reviews new photos before others can see them. Rejected photos are only visible to you until you delete them."
+        ]
+      },
+      {
+        "h": "7. Service providers (processors)",
+        "li": [
+          "Supabase Inc. (USA) – database, sign-in, real-time chat and photo storage. The data is stored in a data centre in Frankfurt am Main.",
+          "Netlify, Inc. (USA) – delivery of the app files (web hosting).",
+          "Sendinblue SAS / Brevo (France) – sending confirmation and password emails.",
+          "Data processing agreements (Art. 28 GDPR) are in place with all providers. Where data may be transferred to the USA, this is based on the EU-US Data Privacy Framework or the European Commission’s standard contractual clauses."
+        ]
+      },
+      {
+        "h": "8. Retention",
+        "li": [
+          "We keep your data until you delete your account. On deletion we immediately remove your profile, photos, ideas, likes, matches including chats, and dates.",
+          "Reports you made or that concern you are kept without any link to your account so that we can trace abuse.",
+          "Database backups are kept for at most 30 days; after that, deleted data is gone from them as well.",
+          "Our providers delete server logs after a short time, usually within a few days."
+        ]
+      },
+      {
+        "h": "9. Storage on your device",
+        "p": [
+          "asap uses no advertising or statistics cookies and no tracking or analytics services. Your browser only stores what the app needs to work: your sign-in, the “Stay signed in” setting and your chosen language (§ 25(2) no. 2 TDDDG)."
+        ]
+      },
+      {
+        "h": "10. Your rights",
+        "li": [
+          "Access and data portability (Art. 15, 20 GDPR): Profile → “Download my data”.",
+          "Rectification (Art. 16): Profile → “Edit profile”.",
+          "Erasure (Art. 17): Profile → “Delete account”.",
+          "Withdrawing your consent for “interested in” (Art. 7(3)): Profile → “Withdraw consent”. The information is deleted and your profile is hidden from others until you consent again. Withdrawal applies to the future.",
+          "Restriction of processing (Art. 18) and objection to processing based on legitimate interest (Art. 21): by email to {email}.",
+          "Complaint to a data protection supervisory authority (Art. 77), for example the one where you live."
+        ]
+      },
+      {
+        "h": "11. No automated decisions",
+        "p": [
+          "The order of the feed is based on distance, shared interests and recency. There are no automated decisions with legal effect (Art. 22 GDPR)."
+        ]
+      },
+      {
+        "h": "12. Minimum age",
+        "p": [
+          "asap is only for people aged 18 and over. Your date of birth is checked when you create your profile."
+        ]
+      }
     ]
   },
   "terms": {
     "title": "Community rules",
     "intro": "asap is a free, private project in its test phase. By registering you agree to these rules. The German version is legally binding. Last updated: November 2026.",
     "sections": [
-      { "h": "1. Who can join", "li": [
-        "You are at least 18 years old.",
-        "You use asap privately to meet people – not for advertising, sales or other business purposes.",
-        "One account per person. During the test phase you need an invite code to register."
-      ] },
-      { "h": "2. Honest information", "li": [
-        "Your profile describes yourself – no fake names, no false age, no fake profiles.",
-        "Only upload photos that show you and that you have the rights to. No nudity, no violence, no other people without their consent."
-      ] },
-      { "h": "3. Respect", "li": [
-        "No harassment, insults, threats, hate speech or discrimination.",
-        "No sexual content without consent, no spam, no scams, no links to outside offers.",
-        "A “no” or no reply is an answer."
-      ] },
-      { "h": "4. Reporting, blocking, moderation", "li": [
-        "If someone breaks these rules, report them in the app. Blocking makes them disappear for you immediately.",
-        "We review reports and photos. In case of violations we may remove content and suspend or delete accounts.",
-        "If you are in immediate danger, please call the police (110 in Germany)."
-      ] },
-      { "h": "5. Meeting safely", "li": [
-        "Meet in a public place for the first date and tell someone you trust.",
-        "Never share bank or login details and never send anyone money.",
-        "asap does not verify users’ identities and is not responsible for other people’s behaviour when you meet."
-      ] },
-      { "h": "6. Test phase", "li": [
-        "asap is still in development. Features may change, errors may occur, and the service may be temporarily unavailable.",
-        "The test phase may end at any time. We will let you know by email beforehand so you can download your data.",
-        "We are only liable for intent and gross negligence and under mandatory statutory provisions."
-      ] },
-      { "h": "7. Ending your account and changes", "li": [
-        "You can delete your account at any time in your profile.",
-        "If these rules change significantly, we will ask you to agree again in the app."
-      ] },
-      { "h": "8. Contact", "p": ["Questions and feedback to {email}."] }
+      {
+        "h": "1. Who can join",
+        "li": [
+          "You are at least 18 years old.",
+          "You use asap privately to meet people – not for advertising, sales or other business purposes.",
+          "One account per person. During the test phase you need an invite code to register."
+        ]
+      },
+      {
+        "h": "2. Honest information",
+        "li": [
+          "Your profile describes yourself – no fake names, no false age, no fake profiles.",
+          "Only upload photos that show you and that you have the rights to. No nudity, no violence, no other people without their consent."
+        ]
+      },
+      {
+        "h": "3. Respect",
+        "li": [
+          "No harassment, insults, threats, hate speech or discrimination.",
+          "No sexual content without consent, no spam, no scams, no links to outside offers.",
+          "A “no” or no reply is an answer."
+        ]
+      },
+      {
+        "h": "4. Reporting, blocking, moderation",
+        "li": [
+          "If someone breaks these rules, report them in the app. Blocking makes them disappear for you immediately.",
+          "We review reports and photos. In case of violations we may remove content and suspend or delete accounts.",
+          "If you are in immediate danger, please call the police (110 in Germany)."
+        ]
+      },
+      {
+        "h": "5. Meeting safely",
+        "li": [
+          "Meet in a public place for the first date and tell someone you trust.",
+          "Never share bank or login details and never send anyone money.",
+          "asap does not verify users’ identities and is not responsible for other people’s behaviour when you meet."
+        ]
+      },
+      {
+        "h": "6. Test phase",
+        "li": [
+          "asap is still in development. Features may change, errors may occur, and the service may be temporarily unavailable.",
+          "The test phase may end at any time. We will let you know by email beforehand so you can download your data.",
+          "We are only liable for intent and gross negligence and under mandatory statutory provisions."
+        ]
+      },
+      {
+        "h": "7. Ending your account and changes",
+        "li": [
+          "You can delete your account at any time in your profile.",
+          "If these rules change significantly, we will ask you to agree again in the app."
+        ]
+      },
+      {
+        "h": "8. Contact",
+        "p": [
+          "Questions and feedback to {email}."
+        ]
+      }
     ]
   },
   "imprint": {
     "title": "Legal notice",
     "intro": "Private, non-commercial project in its test phase.",
     "sections": [
-      { "h": "Information according to § 5 DDG", "p": ["{name}", "{address}"] },
-      { "h": "Contact", "p": ["Email: {email}"] },
-      { "h": "Responsible for content according to § 18(2) MStV", "p": ["{name}, address as above"] },
-      { "h": "User content", "p": ["Profiles, ideas and messages are created by users themselves. We remove unlawful content as soon as we become aware of it – please report it in the app or by email."] }
+      {
+        "h": "Information according to § 5 DDG",
+        "p": [
+          "{name}",
+          "{address}"
+        ]
+      },
+      {
+        "h": "Contact",
+        "p": [
+          "Email: {email}"
+        ]
+      },
+      {
+        "h": "Responsible for content according to § 18(2) MStV",
+        "p": [
+          "{name}, address as above"
+        ]
+      },
+      {
+        "h": "User content",
+        "p": [
+          "Profiles, ideas and messages are created by users themselves. We remove unlawful content as soon as we become aware of it – please report it in the app or by email."
+        ]
+      }
     ]
   }
 }
