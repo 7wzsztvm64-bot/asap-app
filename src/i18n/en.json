@@ -35,7 +35,10 @@
     "passwordRepeat": "Repeat password",
     "haveAccount": "Already have an account?",
     "registeredTitle": "Welcome to asap!",
-    "registeredText": "Tell us a little about yourself."
+    "registeredText": "Tell us a little about yourself.",
+    "inviteCode": "Invite code",
+    "inviteCodePlaceholder": "e.g. FFM-BETA-…",
+    "inviteCodeHint": "asap is currently in beta. You get the code with your invitation."
   },
   "feed": {
     "like": "I'm in!",
@@ -123,7 +126,8 @@
     "PROPOSAL_LIMIT": "You already have three open date proposals – wait for a reply.",
     "PHOTO_LIMIT": "You can upload up to 3 photos. Delete one first.",
     "PHOTO_TOO_LARGE": "This photo is too large. Please choose another one.",
-    "PHOTO_UPLOAD": "The photo could not be uploaded. Please try again."
+    "PHOTO_UPLOAD": "The photo could not be uploaded. Please try again.",
+    "INVITE_INVALID": "This invite code is invalid or already used up."
   },
   "validation": {
     "email": "Please enter a valid email address.",
@@ -170,7 +174,9 @@
     "passwordRepeat": "Please repeat your password.",
     "samePassword": "The new password must differ from the old one.",
     "photoType": "This image format is not supported. Please choose a JPG or PNG photo.",
-    "photoSmall": "This photo is too small (at least 200 pixels)."
+    "photoSmall": "This photo is too small (at least 200 pixels).",
+    "inviteCode": "This invite code is invalid or already used up.",
+    "inviteCodeMissing": "Please enter your invite code."
   },
   "chat": {
     "proposalPreview": {

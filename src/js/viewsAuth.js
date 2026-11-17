@@ -127,6 +127,9 @@ const RegisterView = {
       <form class="auth-form" novalidate>
         <h2>${t('auth.register')}</h2>
         <p class="sub">${t('auth.registerSub')}</p>
+        <div class="field" data-field="inviteCode" hidden><label class="label" for="re-code">${t('auth.inviteCode')}</label>
+          <input id="re-code" class="input" name="inviteCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="${t('auth.inviteCodePlaceholder')}">
+          <p class="hint" style="margin:6px 0 0">${t('auth.inviteCodeHint')}</p></div>
         <div class="field" data-field="email"><label class="label" for="re-email">${t('auth.email')}</label>
           <input id="re-email" class="input" type="email" name="email" autocomplete="email" inputmode="email" placeholder="${t('auth.emailPlaceholder')}"></div>
         <div class="field" data-field="password"><label class="label" for="re-pw">${t('auth.password')} <span class="count">${t('auth.passwordHint')}</span></label>
@@ -150,13 +153,20 @@ const RegisterView = {
         text: t('confirmEmail.text', { email }), actions: [{ label: t('confirmEmail.toLogin'), go: '#/login' }] })}
         <p class="legal">${t('confirmEmail.hint')}</p></div>`);
     }
+    // Beta: Feld für den Einladungscode nur, wenn die Datenbank einen verlangt
+    let inviteRequired = false;
+    DataService.getSignupOptions().then(o => {
+      inviteRequired = o.inviteRequired;
+      $('[data-field="inviteCode"]', form).hidden = !inviteRequired;
+    }).catch(() => {});
     const meter = $('.strength', form);
     form.password.addEventListener('input', () => { meter.dataset.level = passwordStrength(form.password.value); });
     bindSubmit(form, async () => {
       const btn = $('[data-submit]', form);
       if (UI.isBusy(btn)) return;
-      const data = { email: form.email.value.trim(), password: form.password.value, passwordRepeat: form.passwordRepeat.value };
+      const data = { email: form.email.value.trim(), password: form.password.value, passwordRepeat: form.passwordRepeat.value, inviteCode: form.inviteCode.value };
       const f = {};
+      if (inviteRequired && !data.inviteCode.trim()) f.inviteCode = t('validation.inviteCodeMissing');
       if (!Util.isValidEmail(data.email)) f.email = t('validation.email');
       if (data.password.length < 8) f.password = t('validation.passwordMin');
       if (!data.passwordRepeat) f.passwordRepeat = t('validation.passwordRepeat');

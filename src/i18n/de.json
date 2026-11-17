@@ -35,7 +35,10 @@
     "passwordRepeat": "Passwort wiederholen",
     "haveAccount": "Schon dabei?",
     "registeredTitle": "Willkommen bei asap!",
-    "registeredText": "Erzähl uns kurz etwas über dich."
+    "registeredText": "Erzähl uns kurz etwas über dich.",
+    "inviteCode": "Einladungscode",
+    "inviteCodePlaceholder": "z. B. FFM-BETA-…",
+    "inviteCodeHint": "asap ist gerade in der Testphase. Den Code bekommst du mit deiner Einladung."
   },
   "feed": {
     "like": "Dabei!",
@@ -123,7 +126,8 @@
     "PROPOSAL_LIMIT": "Du hast schon drei offene Terminvorschläge – warte auf eine Antwort.",
     "PHOTO_LIMIT": "Du kannst höchstens 3 Fotos hochladen. Lösch zuerst eins.",
     "PHOTO_TOO_LARGE": "Das Foto ist zu groß. Bitte wähle ein anderes.",
-    "PHOTO_UPLOAD": "Das Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal."
+    "PHOTO_UPLOAD": "Das Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal.",
+    "INVITE_INVALID": "Dieser Einladungscode ist ungültig oder schon aufgebraucht."
   },
   "validation": {
     "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -170,7 +174,9 @@
     "passwordRepeat": "Bitte wiederhole dein Passwort.",
     "samePassword": "Das neue Passwort muss sich vom alten unterscheiden.",
     "photoType": "Dieses Bildformat wird nicht unterstützt. Bitte wähle ein JPG- oder PNG-Foto.",
-    "photoSmall": "Das Foto ist zu klein (mindestens 200 Pixel)."
+    "photoSmall": "Das Foto ist zu klein (mindestens 200 Pixel).",
+    "inviteCode": "Dieser Einladungscode ist ungültig oder schon aufgebraucht.",
+    "inviteCodeMissing": "Bitte gib deinen Einladungscode ein."
   },
   "chat": {
     "proposalPreview": {

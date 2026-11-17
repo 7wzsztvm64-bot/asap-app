@@ -367,11 +367,22 @@ const DataService = (() => {
     consumePasswordRecovery() { const r = recoveryPending; recoveryPending = false; return r; },
 
     /* ----- Auth ----- */
-    register({ email, password, passwordRepeat }) {
+    /** Braucht die Registrierung einen Einladungscode? (Beta, siehe Migration invite_codes.sql) */
+    getSignupOptions() {
+      return request('rpc.invite_required', async () => ({ inviteRequired: !!(await rpc('invite_required')) }));
+    },
+    register({ email, password, passwordRepeat, inviteCode = '' }) {
       return request('auth.signUp', async () => {
         const em = validateCredentials({ email, password, passwordRepeat });
+        const code = String(inviteCode || '').trim();
+        const inviteError = () => validationError({ inviteCode: t('validation.inviteCode') });
+        // Vorab prüfen für eine klare Meldung – verbindlich prüft der Trigger bei der Registrierung
+        if (await rpc('invite_required') && !(code && await rpc('check_invite_code', { p_code: code }))) throw inviteError();
         setRememberSession(true);
-        const { data, error } = await supabase.auth.signUp({ email: em, password, options: { emailRedirectTo: location.origin + location.pathname } });
+        const { data, error } = await supabase.auth.signUp({ email: em, password,
+          options: { emailRedirectTo: location.origin + location.pathname, data: code ? { invite_code: code } : {} } });
+        // Lehnt ein Datenbank-Trigger ab, meldet Supabase Auth nur „Database error saving new user“
+        if (error && /database error saving new user/i.test(error.message || '')) throw inviteError();
         if (error) throw error;
         // Mit E-Mail-Bestätigung gibt es noch keine Sitzung. (Auch bei bereits registrierter
         // Adresse kommt diese Antwort – so verrät die App nicht, wer schon ein Konto hat.)
