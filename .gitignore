@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+.env.prod
 .DS_Store
 *.log
 # später für Capacitor:

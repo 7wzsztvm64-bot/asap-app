@@ -14,7 +14,8 @@
     "db:query": "node scripts/db.mjs query",
     "db:seed": "node scripts/db.mjs seed",
     "dev:lan": "vite --host",
-    "db:auth": "node scripts/db.mjs auth"
+    "db:auth": "node scripts/db.mjs auth",
+    "db:invite": "node scripts/db.mjs invite"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.11",

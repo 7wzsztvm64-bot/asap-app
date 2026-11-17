@@ -7,6 +7,10 @@
      npm run db:query -- "select 1"  – einzelne SQL-Abfrage, Ergebnis als Tabelle (mit --json als JSON)
      npm run db:seed                 – Testpersonen (@datedate.app, Passwort Test1234) neu anlegen
      npm run db:auth                 – Auth-Einstellungen aus supabase/auth/ (+ SMTP aus .env) übernehmen
+     npm run db:invite -- list | create 20 "Notiz" | required on|off   – Einladungscodes der Beta (#22)
+
+   Ziel ist das Test-/Entwicklungsprojekt aus .env. Mit --prod (z. B. npm run db:migrate -- --prod)
+   geht alles ans Produktionsprojekt aus .env.prod (#20) – dort sind Testdaten (db:seed) gesperrt.
 
    Welche Migrationen schon drin sind, steht wie bei der Supabase CLI in
    supabase_migrations.schema_migrations – ein späterer Wechsel zur CLI bleibt also möglich. */
@@ -15,6 +19,11 @@ import { join } from 'node:path';
 
 const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'supabase', 'migrations');
 
+// .env.prod zuerst: loadEnvFile überschreibt nichts, also gewinnen die Produktionswerte; der Rest kommt aus .env
+const PROD = process.argv.includes('--prod');
+if (PROD) {
+  try { process.loadEnvFile('.env.prod'); } catch { console.error('Für --prod fehlt .env.prod (siehe .env.example).'); process.exit(1); }
+}
 try { process.loadEnvFile('.env'); } catch { /* fehlende .env wird unten gemeldet */ }
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const projectRef = (process.env.VITE_SUPABASE_URL || '').match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1];
@@ -23,6 +32,8 @@ if (!token || !projectRef) {
   console.error('SUPABASE_ACCESS_TOKEN und VITE_SUPABASE_URL müssen in .env stehen (siehe .env.example).');
   process.exit(1);
 }
+
+if (PROD) console.warn(`⚠️  PRODUKTION (${projectRef})\n`);
 
 // Erinnerung: Der Access Token läuft ab (Datum in .env: SUPABASE_ACCESS_TOKEN_EXPIRES=JJJJ-MM-TT)
 const TOKEN_HELP = 'Neuen Token unter https://supabase.com/dashboard/account/tokens erstellen (30 Tage) und in .env '
@@ -87,6 +98,7 @@ async function removeSeedPhotos() {
 /* Testdaten aus src/js/seed.js (dieselben wie im Mock-Backend) als SQL einspielen.
    Löscht vorher alle Konten mit @datedate.app – inkl. allem, was daran hängt. Nur für Testprojekte! */
 async function seed() {
+  if (PROD) throw new Error('Testdaten gibt es nur im Testprojekt – db:seed ist mit --prod gesperrt.');
   const { buildSeedDB, seedUuid, TEST_PASSWORD } = await import('../src/js/seed.js');
   const data = await buildSeedDB();
   await removeSeedPhotos();
@@ -143,6 +155,8 @@ async function applyAuthConfig() {
   const config = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8'));
   config.mailer_templates_confirmation_content = readFileSync(join(dir, 'confirmation.html'), 'utf8');
   config.mailer_templates_recovery_content = readFileSync(join(dir, 'recovery.html'), 'utf8');
+  // Produktion: eigene Adresse der Web-Beta (Weiterleitungen nach Mail-Links)
+  if (PROD) Object.assign(config, JSON.parse(readFileSync(join(dir, 'config.prod.json'), 'utf8')));
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SENDER_EMAIL } = process.env;
   if (SMTP_HOST && SMTP_USER && SMTP_PASS && SMTP_SENDER_EMAIL) {
     Object.assign(config, { smtp_host: SMTP_HOST, smtp_port: String(SMTP_PORT || 587), smtp_user: SMTP_USER, smtp_pass: SMTP_PASS,
@@ -163,16 +177,42 @@ async function applyAuthConfig() {
     + `Mailversand: ${body.smtp_host ? `${body.smtp_host} als ${body.smtp_admin_email}` : 'Supabase-Standard (nur Team-Adressen, 2/Std.)'})`);
 }
 
-const [command, sql] = process.argv.slice(2);
+/* Einladungscodes (#22): auflisten, neu anlegen, Pflicht an/aus */
+async function invite([action, arg1, arg2]) {
+  if (action === 'list' || !action) {
+    console.table(await query(`select code, note, uses || ' / ' || max_uses as genutzt, expires_at, created_at from moderation.invite_codes order by created_at desc`));
+    const [{ invite_required: on }] = await query('select invite_required from moderation.config');
+    return console.log(`Registrierung nur mit Code: ${on ? 'an' : 'aus'}`);
+  }
+  if (action === 'create') {
+    const maxUses = Number(arg1 || 1);
+    if (!Number.isInteger(maxUses) || maxUses < 1) throw new Error('Anzahl Nutzungen als ganze Zahl angeben, z. B. create 20 "Notiz"');
+    const ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // ohne 0/O, 1/I – leichter abzutippen
+    const part = () => Array.from(crypto.getRandomValues(new Uint8Array(4)), b => ABC[b % ABC.length]).join('');
+    const code = `ASAP-${part()}-${part()}`;
+    const lit = v => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
+    await query(`insert into moderation.invite_codes (code, note, max_uses) values (${lit(code)}, ${lit(arg2 || null)}, ${maxUses})`);
+    return console.log(`✔ Neuer Code: ${code} (bis zu ${maxUses}× nutzbar)`);
+  }
+  if (action === 'required' && (arg1 === 'on' || arg1 === 'off')) {
+    await query(`update moderation.config set invite_required = ${arg1 === 'on'}`);
+    return console.log(`✔ Registrierung nur mit Code: ${arg1 === 'on' ? 'an' : 'aus'}`);
+  }
+  throw new Error('Aufruf: npm run db:invite -- list | create <Nutzungen> "Notiz" | required on|off   (jeweils + --prod)');
+}
+
+// Schalter (--prod, --json) sind keine Argumente
+const [command, sql, ...rest] = process.argv.slice(2).filter(a => !a.startsWith('--'));
 try {
   if (command === 'migrate') await migrate();
+  else if (command === 'invite') await invite([sql, ...rest]);
   else if (command === 'seed') await seed();
   else if (command === 'auth') await applyAuthConfig();
   else if (command === 'query' && sql) {
     const rows = await query(sql);
     if (process.argv.includes('--json')) console.log(JSON.stringify(rows)); else console.table(rows);
   }
-  else { console.error('Aufruf: npm run db:migrate  |  npm run db:seed  |  npm run db:auth  |  npm run db:query -- "SQL"'); process.exit(1); }
+  else { console.error('Aufruf: npm run db:migrate | db:seed | db:auth | db:invite -- … | db:query -- "SQL"   (Produktion: + -- --prod)'); process.exit(1); }
 } catch (e) {
   console.error('✖', e.message);
   process.exit(1);
