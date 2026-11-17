@@ -298,12 +298,12 @@ const RequestsView = {
       n.hidden = !data.received.length; n.textContent = data.received.length;
       if (seg === 'received') {
         list.innerHTML = data.received.length
-          ? html`<div class="info-note">${icon('info', 18)}<span>${t('requests.receivedInfo')}</span></div>${data.received.map(receivedCard)}`
+          ? html`${data.received.map(receivedCard)}`
           : UI.empty({ emoji: '💌', title: t('requests.noneTitle'), text: t('requests.noneText'),
             actions: [{ label: t('requests.newIdea'), go: '#/ideas/new', icon: 'plus' }, { label: t('requests.discover'), go: '#/feed', kind: 'btn-ghost' }] });
       } else {
         list.innerHTML = data.sent.length
-          ? html`<div class="info-note">${icon('info', 18)}<span>${t('requests.sentInfo')}</span></div>${data.sent.map(sentRow)}`
+          ? html`${data.sent.map(sentRow)}`
           : UI.empty({ emoji: '✉️', title: t('requests.noneSentTitle'), text: t('requests.noneSentText'), actions: [{ label: t('requests.discover'), go: '#/feed' }] });
       }
     }
