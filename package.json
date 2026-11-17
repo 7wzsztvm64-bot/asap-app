@@ -17,6 +17,7 @@
     "db:auth": "node scripts/db.mjs auth",
     "db:invite": "node scripts/db.mjs invite",
     "db:backup": "node scripts/db.mjs backup",
+    "db:notify": "node scripts/db.mjs notify",
     "db:restore-check": "node scripts/db.mjs restore-check"
   },
   "devDependencies": {

@@ -54,6 +54,15 @@ const SUPABASE_ENV = `
   $$;
   grant usage on schema storage to anon, authenticated, service_role;
   grant select, insert, update, delete on storage.objects to authenticated;
+  -- Vault (verschlüsselte Geheimnisse) und pg_net: Stub schreibt Anfragen in net.calls statt sie zu senden
+  create schema vault;
+  create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
+  create schema net;
+  create table net.calls (url text, headers jsonb, body jsonb);
+  create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}',
+    timeout_milliseconds integer default 5000) returns bigint language sql as $$
+    insert into net.calls values (url, headers, body) returning 1::bigint
+  $$;
 `;
 
 export async function createTestDb() {

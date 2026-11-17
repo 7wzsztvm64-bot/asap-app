@@ -8,6 +8,7 @@
      npm run db:seed                 – Testpersonen (@datedate.app, Passwort Test1234) neu anlegen
      npm run db:auth                 – Auth-Einstellungen aus supabase/auth/ (+ SMTP aus .env) übernehmen
      npm run db:invite -- list | create 20 "Notiz" | required on|off   – Einladungscodes der Beta (#22)
+     npm run db:notify -- setup | test | status | remove   – tägliche Moderations-Mail über Brevo (#24)
      npm run db:backup               – alle Daten + Fotos nach ~/asap-backups/<dev|prod>/ (30 Tage) (#25)
      npm run db:restore-check -- <Ordner>  – Backup testweise in eine lokale Datenbank einspielen und vergleichen
 
@@ -276,6 +277,45 @@ async function restoreCheck(dir) {
   console.log(`✔ Backup vom ${data.createdAt} lässt sich vollständig einspielen (Migrationen bis ${data.migrations.at(-1)}).`);
 }
 
+/* ---------- Moderations-Mail (#24) ----------
+   Schlüssel (BREVO_API_KEY) und Empfänger (MODERATION_EMAIL, sonst SMTP_SENDER_EMAIL) aus .env in den
+   Supabase Vault des Zielprojekts schreiben; der tägliche pg_cron-Job liest sie dort. */
+async function notify([action]) {
+  const lit = v => `'${String(v).replace(/'/g, "''")}'`;
+  const NAMES = ['brevo_api_key', 'moderation_email'];
+  if (action === 'setup') {
+    const key = process.env.BREVO_API_KEY;
+    const email = process.env.MODERATION_EMAIL || process.env.SMTP_SENDER_EMAIL;
+    if (!key || !email) throw new Error('In .env fehlen BREVO_API_KEY und/oder MODERATION_EMAIL (bzw. SMTP_SENDER_EMAIL).');
+    const upsert = (name, value) => `
+      select id into sid from vault.secrets where name = ${lit(name)};
+      if sid is null then perform vault.create_secret(${lit(value)}, ${lit(name)});
+      else perform vault.update_secret(sid, ${lit(value)}); end if;`;
+    await query(`do $$ declare sid uuid; begin ${upsert(NAMES[0], key)} ${upsert(NAMES[1], email)} end $$;`);
+    return console.log(`✔ Moderations-Mail eingerichtet: täglich 07:00 UTC an ${email}, wenn etwas wartet. Testen: npm run db:notify -- test`);
+  }
+  if (action === 'test') {
+    const [{ sent }] = await query('select private.send_moderation_digest(true) as sent');
+    if (!sent) throw new Error('Nicht eingerichtet – zuerst npm run db:notify -- setup');
+    await new Promise(r => setTimeout(r, 4000)); // pg_net sendet im Hintergrund
+    const [res] = await query(`select status_code, content::text as content from net._http_response order by created desc limit 1`);
+    if (!res || res.status_code >= 300) throw new Error(`Brevo hat abgelehnt: ${res ? `${res.status_code} ${res.content}` : 'keine Antwort'}`);
+    return console.log(`✔ Testmail verschickt (Brevo ${res.status_code}) – schau ins Postfach.`);
+  }
+  if (action === 'status') {
+    const [job] = await query(`select schedule, active from cron.job where jobname = 'asap-moderation-digest'`);
+    const set = await query(`select name from vault.secrets where name in (${NAMES.map(lit).join(',')})`);
+    console.log(`Job: ${job ? `${job.schedule} (${job.active ? 'aktiv' : 'inaktiv'})` : 'fehlt'} · Vault: ${set.length === 2 ? 'eingerichtet' : 'nicht eingerichtet'}`);
+    const [{ d }] = await query('select private.moderation_digest() as d');
+    return console.log(`Wartet gerade: ${d.photos} Foto(s), ${d.reports} Meldung(en), ${d.feedback} Feedback`);
+  }
+  if (action === 'remove') {
+    await query(`delete from vault.secrets where name in (${NAMES.map(lit).join(',')})`);
+    return console.log('✔ Schlüssel entfernt – es werden keine Moderations-Mails mehr verschickt.');
+  }
+  throw new Error('Aufruf: npm run db:notify -- setup | test | status | remove   (jeweils + --prod)');
+}
+
 /* Einladungscodes (#22): auflisten, neu anlegen, Pflicht an/aus */
 async function invite([action, arg1, arg2]) {
   if (action === 'list' || !action) {
@@ -306,6 +346,7 @@ try {
   if (command === 'migrate') await migrate();
   else if (command === 'invite') await invite([sql, ...rest]);
   else if (command === 'backup') await backup();
+  else if (command === 'notify') await notify([sql]);
   else if (command === 'restore-check') await restoreCheck(sql);
   else if (command === 'seed') await seed();
   else if (command === 'auth') await applyAuthConfig();

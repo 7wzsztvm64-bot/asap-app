@@ -123,3 +123,30 @@ test('Feedback: nur im eigenen Namen anlegen, nicht lesbar, 10 pro Tag, im Expor
   await t.asAdmin();
   assert.equal((await t.rows(`select 1 from public.feedback where user_id = $1`, [A])).length, 0);
 });
+
+/* ---------- #24 Moderations-Hinweis ---------- */
+test('Moderations-Mail: nur wenn etwas wartet und eingerichtet, nur Anzahlen, nicht von außen aufrufbar', async () => {
+  await t.asAdmin();
+  await t.db.exec(`delete from public.reports; delete from public.feedback; delete from public.photos; delete from net.calls;`);
+  assert.equal((await t.one(`select private.send_moderation_digest() as sent`)).sent, false, 'nichts wartet');
+
+  const A = uid(40);
+  await t.createUser(A, { name: 'Anna' });
+  await t.asAdmin();
+  await t.db.query(`insert into public.feedback (user_id, text) values ($1, 'Geheimer Inhalt')`, [A]);
+  assert.equal((await t.one(`select private.send_moderation_digest() as sent`)).sent, false, 'ohne Vault-Einträge still');
+
+  await t.db.exec(`insert into vault.decrypted_secrets values ('brevo_api_key', 'xkeysib-test'), ('moderation_email', 'noah@example.org')`);
+  assert.equal((await t.one(`select private.send_moderation_digest() as sent`)).sent, true);
+  const call = await t.one(`select * from net.calls`);
+  assert.equal(call.url, 'https://api.brevo.com/v3/smtp/email');
+  assert.equal(call.headers['api-key'], 'xkeysib-test');
+  assert.deepEqual(call.body.to, [{ email: 'noah@example.org' }]);
+  assert.match(call.body.subject, /0 Foto\(s\), 0 Meldung\(en\), 1 Feedback/);
+  assert.ok(!JSON.stringify(call.body).includes('Geheimer Inhalt') && !JSON.stringify(call.body).includes('Anna'), 'keine Inhalte/Namen');
+
+  await t.as(A);
+  await assert.rejects(t.db.query(`select private.send_moderation_digest(true)`), DENIED);
+  await t.asAdmin();
+  await t.db.exec(`delete from vault.decrypted_secrets; delete from net.calls;`);
+});
