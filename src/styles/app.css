@@ -749,6 +749,7 @@ svg{flex-shrink:0}
   .auth-hero .floaters{display:none}  /* Formular ohne Scrollen erreichbar */
 }
 @media (max-width:380px){
+  .input.big-input{font-size:19px}
   .auth-row{font-size:13.5px;gap:8px 12px;flex-wrap:wrap}
   .auth-row .check{font-size:13.5px;gap:8px;white-space:nowrap}
   .auth-row .link-btn{white-space:nowrap}
